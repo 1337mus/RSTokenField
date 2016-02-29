@@ -1,0 +1,553 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DB54D4FF1C839AF5009DADBF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D4FE1C839AF5009DADBF /* AppDelegate.swift */; };
+		DB54D5011C839AF5009DADBF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5001C839AF5009DADBF /* ViewController.swift */; };
+		DB54D5031C839AF5009DADBF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DB54D5021C839AF5009DADBF /* Assets.xcassets */; };
+		DB54D5061C839AF5009DADBF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DB54D5041C839AF5009DADBF /* Main.storyboard */; };
+		DB54D5111C839AF5009DADBF /* RSTokenFieldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5101C839AF5009DADBF /* RSTokenFieldTests.swift */; };
+		DB54D51C1C839AF5009DADBF /* RSTokenFieldUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D51B1C839AF5009DADBF /* RSTokenFieldUITests.swift */; };
+		DB54D5331C83A2E9009DADBF /* OEXTokenAttachmentCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DB54D52C1C83A2E9009DADBF /* OEXTokenAttachmentCell.m */; };
+		DB54D5341C83A2E9009DADBF /* OEXTokenField.m in Sources */ = {isa = PBXBuildFile; fileRef = DB54D52E1C83A2E9009DADBF /* OEXTokenField.m */; };
+		DB54D5351C83A2E9009DADBF /* OEXTokenFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5301C83A2E9009DADBF /* OEXTokenFieldCell.m */; };
+		DB54D5361C83A2E9009DADBF /* OEXTokenTextStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5321C83A2E9009DADBF /* OEXTokenTextStorage.m */; };
+		DB54D5381C83E709009DADBF /* RSTokenView.xib in Resources */ = {isa = PBXBuildFile; fileRef = DB54D5371C83E709009DADBF /* RSTokenView.xib */; };
+		DB54D53A1C83E9F7009DADBF /* RSTokenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5391C83E9F7009DADBF /* RSTokenView.swift */; };
+		DB54D53C1C83ED02009DADBF /* RSTokenItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D53B1C83ED02009DADBF /* RSTokenItem.swift */; };
+		DB54D53E1C83F554009DADBF /* RSTextAttachmentCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D53D1C83F554009DADBF /* RSTextAttachmentCell.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DB54D50D1C839AF5009DADBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DB54D4F31C839AF5009DADBF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DB54D4FA1C839AF5009DADBF;
+			remoteInfo = RSTokenField;
+		};
+		DB54D5181C839AF5009DADBF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DB54D4F31C839AF5009DADBF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DB54D4FA1C839AF5009DADBF;
+			remoteInfo = RSTokenField;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		DB54D4FB1C839AF5009DADBF /* RSTokenField.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RSTokenField.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB54D4FE1C839AF5009DADBF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		DB54D5001C839AF5009DADBF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		DB54D5021C839AF5009DADBF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DB54D5051C839AF5009DADBF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		DB54D5071C839AF5009DADBF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DB54D50C1C839AF5009DADBF /* RSTokenFieldTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RSTokenFieldTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB54D5101C839AF5009DADBF /* RSTokenFieldTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RSTokenFieldTests.swift; sourceTree = "<group>"; };
+		DB54D5121C839AF5009DADBF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DB54D5171C839AF5009DADBF /* RSTokenFieldUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RSTokenFieldUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB54D51B1C839AF5009DADBF /* RSTokenFieldUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RSTokenFieldUITests.swift; sourceTree = "<group>"; };
+		DB54D51D1C839AF5009DADBF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DB54D52A1C83A2E9009DADBF /* RSTokenField-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RSTokenField-Bridging-Header.h"; sourceTree = "<group>"; };
+		DB54D52B1C83A2E9009DADBF /* OEXTokenAttachmentCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OEXTokenAttachmentCell.h; path = "../../../Downloads/OEXTokenField-master/OEXTokenAttachmentCell.h"; sourceTree = "<group>"; };
+		DB54D52C1C83A2E9009DADBF /* OEXTokenAttachmentCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OEXTokenAttachmentCell.m; path = "../../../Downloads/OEXTokenField-master/OEXTokenAttachmentCell.m"; sourceTree = "<group>"; };
+		DB54D52D1C83A2E9009DADBF /* OEXTokenField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OEXTokenField.h; path = "../../../Downloads/OEXTokenField-master/OEXTokenField.h"; sourceTree = "<group>"; };
+		DB54D52E1C83A2E9009DADBF /* OEXTokenField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OEXTokenField.m; path = "../../../Downloads/OEXTokenField-master/OEXTokenField.m"; sourceTree = "<group>"; };
+		DB54D52F1C83A2E9009DADBF /* OEXTokenFieldCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OEXTokenFieldCell.h; path = "../../../Downloads/OEXTokenField-master/OEXTokenFieldCell.h"; sourceTree = "<group>"; };
+		DB54D5301C83A2E9009DADBF /* OEXTokenFieldCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OEXTokenFieldCell.m; path = "../../../Downloads/OEXTokenField-master/OEXTokenFieldCell.m"; sourceTree = "<group>"; };
+		DB54D5311C83A2E9009DADBF /* OEXTokenTextStorage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OEXTokenTextStorage.h; path = "../../../Downloads/OEXTokenField-master/OEXTokenTextStorage.h"; sourceTree = "<group>"; };
+		DB54D5321C83A2E9009DADBF /* OEXTokenTextStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = OEXTokenTextStorage.m; path = "../../../Downloads/OEXTokenField-master/OEXTokenTextStorage.m"; sourceTree = "<group>"; };
+		DB54D5371C83E709009DADBF /* RSTokenView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RSTokenView.xib; sourceTree = "<group>"; };
+		DB54D5391C83E9F7009DADBF /* RSTokenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenView.swift; sourceTree = "<group>"; };
+		DB54D53B1C83ED02009DADBF /* RSTokenItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenItem.swift; sourceTree = "<group>"; };
+		DB54D53D1C83F554009DADBF /* RSTextAttachmentCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RSTextAttachmentCell.swift; path = RSTokenField/RSTextAttachmentCell.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DB54D4F81C839AF5009DADBF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D5091C839AF5009DADBF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D5141C839AF5009DADBF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DB54D4F21C839AF5009DADBF = {
+			isa = PBXGroup;
+			children = (
+				DB54D4FD1C839AF5009DADBF /* RSTokenField */,
+				DB54D5291C83A2CF009DADBF /* OEXTokenField */,
+				DB54D50F1C839AF5009DADBF /* RSTokenFieldTests */,
+				DB54D51A1C839AF5009DADBF /* RSTokenFieldUITests */,
+				DB54D4FC1C839AF5009DADBF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DB54D4FC1C839AF5009DADBF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DB54D4FB1C839AF5009DADBF /* RSTokenField.app */,
+				DB54D50C1C839AF5009DADBF /* RSTokenFieldTests.xctest */,
+				DB54D5171C839AF5009DADBF /* RSTokenFieldUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DB54D4FD1C839AF5009DADBF /* RSTokenField */ = {
+			isa = PBXGroup;
+			children = (
+				DB54D4FE1C839AF5009DADBF /* AppDelegate.swift */,
+				DB54D5001C839AF5009DADBF /* ViewController.swift */,
+				DB54D5371C83E709009DADBF /* RSTokenView.xib */,
+				DB54D5391C83E9F7009DADBF /* RSTokenView.swift */,
+				DB54D53B1C83ED02009DADBF /* RSTokenItem.swift */,
+				DB54D5021C839AF5009DADBF /* Assets.xcassets */,
+				DB54D5041C839AF5009DADBF /* Main.storyboard */,
+				DB54D5071C839AF5009DADBF /* Info.plist */,
+			);
+			path = RSTokenField;
+			sourceTree = "<group>";
+		};
+		DB54D50F1C839AF5009DADBF /* RSTokenFieldTests */ = {
+			isa = PBXGroup;
+			children = (
+				DB54D5101C839AF5009DADBF /* RSTokenFieldTests.swift */,
+				DB54D5121C839AF5009DADBF /* Info.plist */,
+			);
+			path = RSTokenFieldTests;
+			sourceTree = "<group>";
+		};
+		DB54D51A1C839AF5009DADBF /* RSTokenFieldUITests */ = {
+			isa = PBXGroup;
+			children = (
+				DB54D51B1C839AF5009DADBF /* RSTokenFieldUITests.swift */,
+				DB54D51D1C839AF5009DADBF /* Info.plist */,
+			);
+			path = RSTokenFieldUITests;
+			sourceTree = "<group>";
+		};
+		DB54D5291C83A2CF009DADBF /* OEXTokenField */ = {
+			isa = PBXGroup;
+			children = (
+				DB54D52B1C83A2E9009DADBF /* OEXTokenAttachmentCell.h */,
+				DB54D52C1C83A2E9009DADBF /* OEXTokenAttachmentCell.m */,
+				DB54D52D1C83A2E9009DADBF /* OEXTokenField.h */,
+				DB54D52E1C83A2E9009DADBF /* OEXTokenField.m */,
+				DB54D52F1C83A2E9009DADBF /* OEXTokenFieldCell.h */,
+				DB54D5301C83A2E9009DADBF /* OEXTokenFieldCell.m */,
+				DB54D5311C83A2E9009DADBF /* OEXTokenTextStorage.h */,
+				DB54D5321C83A2E9009DADBF /* OEXTokenTextStorage.m */,
+				DB54D52A1C83A2E9009DADBF /* RSTokenField-Bridging-Header.h */,
+				DB54D53D1C83F554009DADBF /* RSTextAttachmentCell.swift */,
+			);
+			name = OEXTokenField;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DB54D4FA1C839AF5009DADBF /* RSTokenField */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB54D5201C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenField" */;
+			buildPhases = (
+				DB54D4F71C839AF5009DADBF /* Sources */,
+				DB54D4F81C839AF5009DADBF /* Frameworks */,
+				DB54D4F91C839AF5009DADBF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RSTokenField;
+			productName = RSTokenField;
+			productReference = DB54D4FB1C839AF5009DADBF /* RSTokenField.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DB54D50B1C839AF5009DADBF /* RSTokenFieldTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB54D5231C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldTests" */;
+			buildPhases = (
+				DB54D5081C839AF5009DADBF /* Sources */,
+				DB54D5091C839AF5009DADBF /* Frameworks */,
+				DB54D50A1C839AF5009DADBF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DB54D50E1C839AF5009DADBF /* PBXTargetDependency */,
+			);
+			name = RSTokenFieldTests;
+			productName = RSTokenFieldTests;
+			productReference = DB54D50C1C839AF5009DADBF /* RSTokenFieldTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		DB54D5161C839AF5009DADBF /* RSTokenFieldUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB54D5261C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldUITests" */;
+			buildPhases = (
+				DB54D5131C839AF5009DADBF /* Sources */,
+				DB54D5141C839AF5009DADBF /* Frameworks */,
+				DB54D5151C839AF5009DADBF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DB54D5191C839AF5009DADBF /* PBXTargetDependency */,
+			);
+			name = RSTokenFieldUITests;
+			productName = RSTokenFieldUITests;
+			productReference = DB54D5171C839AF5009DADBF /* RSTokenFieldUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DB54D4F31C839AF5009DADBF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0720;
+				LastUpgradeCheck = 0720;
+				ORGANIZATIONNAME = KittyKat;
+				TargetAttributes = {
+					DB54D4FA1C839AF5009DADBF = {
+						CreatedOnToolsVersion = 7.2.1;
+					};
+					DB54D50B1C839AF5009DADBF = {
+						CreatedOnToolsVersion = 7.2.1;
+						TestTargetID = DB54D4FA1C839AF5009DADBF;
+					};
+					DB54D5161C839AF5009DADBF = {
+						CreatedOnToolsVersion = 7.2.1;
+						TestTargetID = DB54D4FA1C839AF5009DADBF;
+					};
+				};
+			};
+			buildConfigurationList = DB54D4F61C839AF5009DADBF /* Build configuration list for PBXProject "RSTokenField" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DB54D4F21C839AF5009DADBF;
+			productRefGroup = DB54D4FC1C839AF5009DADBF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DB54D4FA1C839AF5009DADBF /* RSTokenField */,
+				DB54D50B1C839AF5009DADBF /* RSTokenFieldTests */,
+				DB54D5161C839AF5009DADBF /* RSTokenFieldUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DB54D4F91C839AF5009DADBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB54D5031C839AF5009DADBF /* Assets.xcassets in Resources */,
+				DB54D5381C83E709009DADBF /* RSTokenView.xib in Resources */,
+				DB54D5061C839AF5009DADBF /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D50A1C839AF5009DADBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D5151C839AF5009DADBF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DB54D4F71C839AF5009DADBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB54D5331C83A2E9009DADBF /* OEXTokenAttachmentCell.m in Sources */,
+				DB54D53C1C83ED02009DADBF /* RSTokenItem.swift in Sources */,
+				DB54D5351C83A2E9009DADBF /* OEXTokenFieldCell.m in Sources */,
+				DB54D53E1C83F554009DADBF /* RSTextAttachmentCell.swift in Sources */,
+				DB54D5011C839AF5009DADBF /* ViewController.swift in Sources */,
+				DB54D4FF1C839AF5009DADBF /* AppDelegate.swift in Sources */,
+				DB54D5341C83A2E9009DADBF /* OEXTokenField.m in Sources */,
+				DB54D53A1C83E9F7009DADBF /* RSTokenView.swift in Sources */,
+				DB54D5361C83A2E9009DADBF /* OEXTokenTextStorage.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D5081C839AF5009DADBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB54D5111C839AF5009DADBF /* RSTokenFieldTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DB54D5131C839AF5009DADBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB54D51C1C839AF5009DADBF /* RSTokenFieldUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DB54D50E1C839AF5009DADBF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DB54D4FA1C839AF5009DADBF /* RSTokenField */;
+			targetProxy = DB54D50D1C839AF5009DADBF /* PBXContainerItemProxy */;
+		};
+		DB54D5191C839AF5009DADBF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DB54D4FA1C839AF5009DADBF /* RSTokenField */;
+			targetProxy = DB54D5181C839AF5009DADBF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		DB54D5041C839AF5009DADBF /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DB54D5051C839AF5009DADBF /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		DB54D51E1C839AF5009DADBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DB54D51F1C839AF5009DADBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DB54D5211C839AF5009DADBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenField/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenField;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "RSTokenField-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		DB54D5221C839AF5009DADBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenField/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenField;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "RSTokenField-Bridging-Header.h";
+			};
+			name = Release;
+		};
+		DB54D5241C839AF5009DADBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenFieldTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenFieldTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RSTokenField.app/Contents/MacOS/RSTokenField";
+			};
+			name = Debug;
+		};
+		DB54D5251C839AF5009DADBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenFieldTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenFieldTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RSTokenField.app/Contents/MacOS/RSTokenField";
+			};
+			name = Release;
+		};
+		DB54D5271C839AF5009DADBF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenFieldUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenFieldUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = RSTokenField;
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		DB54D5281C839AF5009DADBF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = RSTokenFieldUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.xyz.RSTokenFieldUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = RSTokenField;
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DB54D4F61C839AF5009DADBF /* Build configuration list for PBXProject "RSTokenField" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DB54D51E1C839AF5009DADBF /* Debug */,
+				DB54D51F1C839AF5009DADBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DB54D5201C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenField" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DB54D5211C839AF5009DADBF /* Debug */,
+				DB54D5221C839AF5009DADBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		DB54D5231C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DB54D5241C839AF5009DADBF /* Debug */,
+				DB54D5251C839AF5009DADBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		DB54D5261C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DB54D5271C839AF5009DADBF /* Debug */,
+				DB54D5281C839AF5009DADBF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DB54D4F31C839AF5009DADBF /* Project object */;
+}
