@@ -24,6 +24,7 @@ import Cocoa
     override func resizeSubviewsWithOldSize(oldSize: NSSize) {
         super.resizeSubviewsWithOldSize(oldSize)
         self.title.sizeToFit()
+        self.typeButton.sizeToFit()
     }
     
     override func drawRect(dirtyRect: NSRect) {

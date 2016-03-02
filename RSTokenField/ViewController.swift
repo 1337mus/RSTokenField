@@ -10,7 +10,7 @@ import Cocoa
 
 class ViewController: NSViewController {
 
-    @IBOutlet var tokenField: OEXTokenField! {
+    @IBOutlet var tokenField: RSTokenField! {
         didSet {
             tokenField.delegate = self
         }
@@ -28,6 +28,14 @@ class ViewController: NSViewController {
     }
 
 
+}
+
+extension ViewController: RSTokenFieldDelegate {
+    func tokenField(tokenField: RSTokenField, completionsForSubstring: String) -> [String] {
+        return ["Apple", "Banana", "Pears", "Star Fruit", "Dragon Fruit", "Mango", "Pineapple", "Coconut", "Lychee", "Blackberry", "Papaya", "Blueberry", "Raspberry",
+        "Orange", "Sweet Lime", "Cashew", "Almond", "Grapes", "Peach", "Custard Apple", "Jack fruit", "Chickoo", "Random fruit", "The fruit fox couldn't reach", "My Mom",
+        "My Dad", "Anal fruit"]
+    }
 }
 
 extension ViewController: OEXTokenFieldDelegate {
