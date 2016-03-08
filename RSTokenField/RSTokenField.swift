@@ -8,15 +8,15 @@
 
 import Cocoa
 
-@objc protocol RSTokenFieldDelegate : NSTextFieldDelegate {
-    optional func tokenField(tokenField: RSTokenField, completionsForSubstring: String) -> [String]
-    optional func tokenField(tokenField: RSTokenField, didChangeTokens tokens: [RSTokenItem])
-    optional func tokenField(tokenField: RSTokenField, willChangeTokens tokens: [RSTokenItem])
-    optional func tokenField(tokenField: RSTokenField, shouldAddToken token: String, atIndex index: Int) -> Bool
-    optional func tokenField(tokenField: RSTokenField, menuForToken string: String, atIndex index: Int) -> NSMenu
+protocol RSTokenFieldDelegate : NSTextFieldDelegate {
+    func tokenField(tokenField: RSTokenField, completionsForSubstring subString: String) -> [RSTokenItemType]
+    func tokenField(tokenField: RSTokenField, didChangeTokens tokens: [RSTokenItem])
+    func tokenField(tokenField: RSTokenField, willChangeTokens tokens: [RSTokenItem])
+    func tokenField(tokenField: RSTokenField, shouldAddToken token: String, atIndex index: Int) -> Bool
+    func tokenField(tokenField: RSTokenField, menuForToken string: String, atIndex index: Int) -> NSMenu
 }
 
-class RSTokenField: NSTextField, NSTextViewDelegate {
+class RSTokenField: NSTextField {
 
     private var _tokenArray: [RSTokenItem]? = nil
     
@@ -30,6 +30,7 @@ class RSTokenField: NSTextField, NSTextViewDelegate {
                 if (self._tokenArray! != newValue) {
                     let appendedAttributeString = NSMutableAttributedString()
                     
+                    var i = false
                     for token in newValue.reverse() {
                         var topLevelObjects: NSArray?
                         NSBundle.mainBundle().loadNibNamed("RSTokenView",
@@ -50,6 +51,9 @@ class RSTokenField: NSTextField, NSTextViewDelegate {
                         attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
                         
                         appendedAttributeString.appendAttributedString(attributeString)
+                        
+                        let whiteSpace = NSMutableAttributedString(string: " ")
+                        appendedAttributeString.appendAttributedString(whiteSpace)
                     }
                     
                     self.attributedStringValue = appendedAttributeString
@@ -73,7 +77,66 @@ class RSTokenField: NSTextField, NSTextViewDelegate {
         }
     }
     
-    //MARK: NSTextViewDelegate Methods
+    //MARK: Public Methods
+    
+    func replaceToken(withType type: String, tokenTitle title: String, atIndex index: Int) {
+        let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
+        
+        mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
+            if let val = value, let v = val as? RSTextAttachment {
+                let tt = v.tokenView.title.stringValue
+                if tt == title && range.location == index {
+                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
+                    
+                    v.tokenView.tokenItem = RSTokenItem(type: type, title: title)
+                    self.tokenArray[index] = v.tokenView.tokenItem
+                    let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
+                    
+                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                    stop.initialize(true)
+                }
+            }
+        }
+        
+        self.attributedStringValue = mutableAttrString
+        
+        let fieldEditor = self.cell?.fieldEditorForView(self) as! RSTokenTextView
+        fieldEditor.textStorage?.setAttributedString(mutableAttrString)
+        
+    }
+    
+    func setToken(selected: Bool, atIndex index: Int) {
+        let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
+        mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
+            if let v = value as? RSTextAttachment {
+                if range.location == index {
+                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
+                    v.tokenView.selected = selected
+                    let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
+                    
+                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                    
+                } else {
+                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
+                    v.tokenView.selected = !selected
+                    let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
+                    
+                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                }
+                
+            }
+        }
+        
+        self.attributedStringValue = mutableAttrString
+        
+        let fieldEditor = self.cell?.fieldEditorForView(self) as! RSTokenTextView
+        fieldEditor.textStorage?.setAttributedString(mutableAttrString)
+        
+        fieldEditor.setSelectedRange(NSMakeRange(index, 0))
+    }
+}
+
+extension RSTokenField: NSTextViewDelegate {
     
     override func textShouldBeginEditing(textObject: NSText) -> Bool {
         return true
@@ -82,13 +145,10 @@ class RSTokenField: NSTextField, NSTextViewDelegate {
     override func textShouldEndEditing(textObject: NSText) -> Bool {
         return true
     }
-    
-    
 }
 
 extension RSTokenField {
     // Respond to delegate methods here
-    
     func shouldAddToken(token: String, atTokenIndex index:Int) -> Bool {
         return true
     }
@@ -98,6 +158,10 @@ extension RSTokenField {
     }
     
     func textView(aTextView: NSTextView, menuForToken string: String, atIndex index:Int) -> NSMenu? {
+        if ((self.delegate?.respondsToSelector("tokenField:menuForToken:atIndex:")) != nil) {
+            let tokenFieldDelegate = self.delegate as! RSTokenFieldDelegate
+            return tokenFieldDelegate.tokenField(self, menuForToken: string, atIndex: index)
+        }
         return nil
     }
 }

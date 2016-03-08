@@ -67,7 +67,9 @@ class RSTokenTextView: NSTextView {
                     let deleteRange = ((self.textStorage?.string)! as NSString).rangeOfComposedCharacterSequenceAtIndex(deleteIndex)
                     self.textStorage?.replaceCharactersInRange(deleteRange, withString: "")
                     self.setSelectedRange(NSMakeRange(deleteRange.location, 0))
-                    completionController.tearDownWindow()
+                    if completionController.isDisplayingCompletions() {
+                        completionController.tearDownWindow()
+                    }
                 }
             }
             
@@ -75,7 +77,28 @@ class RSTokenTextView: NSTextView {
                 let delegate = self.delegate as! RSTokenField
                 delegate.textView(self, didChangeTokens: self.tokenArray())
             }
+            
+            return
+        } else if aSelector == "moveLeft:" {
+            self.abandonCompletion()
+            let selectedRange = self.selectedRange()
+            if selectedRange.location > 0 && selectedRange.location < self.textStorage?.length {
+                let selectedIndex = selectedRange.location - 1
+                if ((self.textStorage?.tokenStringAtIndex(selectedIndex)) != nil) {
+                    (self.delegate as! RSTokenField).setToken(true, atIndex: selectedIndex)
+                }
+            }
+        } else if aSelector == "moveRight:" {
+            self.abandonCompletion()
+            let selectedRange = self.selectedRange()
+            if selectedRange.location > 0 && selectedRange.location < self.textStorage?.length {
+                let selectedIndex = selectedRange.location + 1
+                if ((self.textStorage?.tokenStringAtIndex(selectedIndex)) != nil) {
+                    (self.delegate as! RSTokenField).setToken(true, atIndex: selectedIndex)
+                }
+            }
         }
+        super.doCommandBySelector(aSelector)
     }
     
     //MARK: Token Methods
@@ -88,7 +111,7 @@ class RSTokenTextView: NSTextView {
         for o in topLevelObjects! {
             if o is RSTokenView {
                 view = o as! RSTokenView
-                view!.tokenItem = RSTokenItem.init(type: .A, title: aString)
+                view!.tokenItem = RSTokenItem.init(type: "Title", title: aString)
             }
         }
         
@@ -192,13 +215,10 @@ class RSTokenTextView: NSTextView {
         return effectiveRange
     }
     
-    func getCompletionsForStem(stem: String) -> [String] {
+    func getCompletionsForStem(stem: String) -> [RSTokenItemType] {
         let delegate = self.delegate as! RSTokenField
         let tokenFieldDelegate = delegate.delegate as! RSTokenFieldDelegate
-        if tokenFieldDelegate.respondsToSelector("tokenField:completionsForSubstring:") {
-            return tokenFieldDelegate.tokenField!(delegate, completionsForSubstring: stem)
-        }
-        return []
+        return tokenFieldDelegate.tokenField(delegate, completionsForSubstring: stem)
     }
     
     func abandonCompletion() {
@@ -220,6 +240,33 @@ class RSTokenTextView: NSTextView {
             let delegate = self.delegate as! RSTokenField
             super.insertText(insertiontext, replacementRange: replacementRange)
             delegate.textView(self, didChangeTokens: self.tokenArray())
+        }
+    }
+    
+    //MARK: handle Mouse clicks
+    override func mouseDown(event: NSEvent) {
+        if event.type == .LeftMouseDown {
+            let pos = self.convertPoint(event.locationInWindow, fromView: nil)
+            var fraction: CGFloat = 0
+            let glyphIndex = self.layoutManager?.glyphIndexForPoint(pos, inTextContainer: self.textContainer!, fractionOfDistanceThroughGlyph: &fraction)
+            
+            let bounds = self.layoutManager?.boundingRectForGlyphRange(NSMakeRange(glyphIndex!, 1), inTextContainer: self.textContainer!)
+            
+            if NSPointInRect(pos, bounds!) {
+                let charIndex = self.layoutManager?.characterIndexForGlyphAtIndex(glyphIndex!)
+                if let attribute = (self.textStorage?.attribute(NSAttachmentAttributeName, atIndex: charIndex!, effectiveRange: nil)) {
+                    if attribute is RSTextAttachment {
+                        let buttonRect = ((attribute as! RSTextAttachment).tokenView?.type.frame)!
+                        let frameToCompare = NSMakeRect((bounds?.origin.x)!, bounds!.origin.y, buttonRect.width, buttonRect.height)
+                        if NSPointInRect(pos, frameToCompare) {
+                            if let menu = (self.delegate as! RSTokenField).textView(self, menuForToken: ((attribute as! RSTextAttachment).tokenView?.title.stringValue)!, atIndex: charIndex!) {
+                                let point = CGPointMake((bounds?.origin.x)! + 2, buttonRect.height)
+                                menu.popUpMenuPositioningItem(menu.itemAtIndex(0), atLocation: point, inView: self)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     

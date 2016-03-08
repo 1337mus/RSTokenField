@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		DB05DD261C8D488E0078466F /* RSTokenItemSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05DD251C8D488E0078466F /* RSTokenItemSection.swift */; };
+		DB05DD281C8E4B930078466F /* RSTableCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05DD271C8E4B930078466F /* RSTableCellView.swift */; };
+		DB05DD2A1C8E4BAC0078466F /* RSTableCellView.xib in Resources */ = {isa = PBXBuildFile; fileRef = DB05DD291C8E4BAC0078466F /* RSTableCellView.xib */; };
+		DB05DD2C1C8E5AC40078466F /* NSImage+RSTokenField.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB05DD2B1C8E5AC40078466F /* NSImage+RSTokenField.swift */; };
 		DB54D4FF1C839AF5009DADBF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D4FE1C839AF5009DADBF /* AppDelegate.swift */; };
 		DB54D5011C839AF5009DADBF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D5001C839AF5009DADBF /* ViewController.swift */; };
 		DB54D5031C839AF5009DADBF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DB54D5021C839AF5009DADBF /* Assets.xcassets */; };
@@ -48,6 +52,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		DB05DD251C8D488E0078466F /* RSTokenItemSection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenItemSection.swift; sourceTree = "<group>"; };
+		DB05DD271C8E4B930078466F /* RSTableCellView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTableCellView.swift; sourceTree = "<group>"; };
+		DB05DD291C8E4BAC0078466F /* RSTableCellView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RSTableCellView.xib; sourceTree = "<group>"; };
+		DB05DD2B1C8E5AC40078466F /* NSImage+RSTokenField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSImage+RSTokenField.swift"; sourceTree = "<group>"; };
 		DB54D4FB1C839AF5009DADBF /* RSTokenField.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RSTokenField.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB54D4FE1C839AF5009DADBF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		DB54D5001C839AF5009DADBF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -179,16 +187,20 @@
 			isa = PBXGroup;
 			children = (
 				DB54D5391C83E9F7009DADBF /* RSTokenView.swift */,
+				DB54D5371C83E709009DADBF /* RSTokenView.xib */,
 				DB54D53B1C83ED02009DADBF /* RSTokenItem.swift */,
+				DB05DD251C8D488E0078466F /* RSTokenItemSection.swift */,
 				DB54D5481C854DD0009DADBF /* RSTextAttachment.swift */,
 				DB54D53D1C83F554009DADBF /* RSTextAttachmentCell.swift */,
-				DB54D5371C83E709009DADBF /* RSTokenView.xib */,
 				DB54D5401C8505BE009DADBF /* RSTokenField.swift */,
 				DB54D5421C85094D009DADBF /* RSTokenFieldCell.swift */,
 				DB54D5441C850BF5009DADBF /* RSTokenTextView.swift */,
 				DB54D54A1C85675D009DADBF /* RSTokenCompletionWindowController.swift */,
 				DB54D54C1C856DB7009DADBF /* RSTokenCompletionTableView.swift */,
+				DB05DD271C8E4B930078466F /* RSTableCellView.swift */,
+				DB05DD291C8E4BAC0078466F /* RSTableCellView.xib */,
 				DB54D5461C854BC7009DADBF /* NSAttributedString+RSTokenField.swift */,
+				DB05DD2B1C8E5AC40078466F /* NSImage+RSTokenField.swift */,
 			);
 			name = RSTokenField;
 			sourceTree = "<group>";
@@ -297,6 +309,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DB05DD2A1C8E4BAC0078466F /* RSTableCellView.xib in Resources */,
 				DB54D5031C839AF5009DADBF /* Assets.xcassets in Resources */,
 				DB54D5381C83E709009DADBF /* RSTokenView.xib in Resources */,
 				DB54D5061C839AF5009DADBF /* Main.storyboard in Resources */,
@@ -329,7 +342,10 @@
 				DB54D5491C854DD0009DADBF /* RSTextAttachment.swift in Sources */,
 				DB54D5351C83A2E9009DADBF /* OEXTokenFieldCell.m in Sources */,
 				DB54D53E1C83F554009DADBF /* RSTextAttachmentCell.swift in Sources */,
+				DB05DD261C8D488E0078466F /* RSTokenItemSection.swift in Sources */,
+				DB05DD281C8E4B930078466F /* RSTableCellView.swift in Sources */,
 				DB54D5011C839AF5009DADBF /* ViewController.swift in Sources */,
+				DB05DD2C1C8E5AC40078466F /* NSImage+RSTokenField.swift in Sources */,
 				DB54D4FF1C839AF5009DADBF /* AppDelegate.swift in Sources */,
 				DB54D5341C83A2E9009DADBF /* OEXTokenField.m in Sources */,
 				DB54D53A1C83E9F7009DADBF /* RSTokenView.swift in Sources */,
@@ -566,6 +582,7 @@
 				DB54D5221C839AF5009DADBF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		DB54D5231C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldTests" */ = {
 			isa = XCConfigurationList;
@@ -574,6 +591,7 @@
 				DB54D5251C839AF5009DADBF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		DB54D5261C839AF5009DADBF /* Build configuration list for PBXNativeTarget "RSTokenFieldUITests" */ = {
 			isa = XCConfigurationList;
@@ -582,6 +600,7 @@
 				DB54D5281C839AF5009DADBF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

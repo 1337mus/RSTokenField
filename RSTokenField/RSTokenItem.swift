@@ -8,11 +8,11 @@
 
 import Cocoa
 
-@objc class RSTokenItem: NSObject {
-    var tokenType: RSTokenType!
+@objc class RSTokenItem: NSObject, RSTokenItemType {
+    var tokenType: String!
     var tokenTitle: String!
     
-    init(type: RSTokenType, title: String) {
+    init(type: String, title: String) {
         self.tokenType = type
         self.tokenTitle = title
     }

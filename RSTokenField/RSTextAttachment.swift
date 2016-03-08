@@ -19,4 +19,8 @@ class RSTextAttachment: NSTextAttachment {
         self.attachmentCell = cell
     }
     
+    func refreshTokenView() {
+        let cell = RSTextAttachmentCell(imageCell:tokenView.imageRepresentation())
+        self.attachmentCell = cell
+    }
 }

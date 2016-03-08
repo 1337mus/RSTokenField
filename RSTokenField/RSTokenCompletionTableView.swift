@@ -11,7 +11,7 @@ import Cocoa
 class RSTokenCompletionTableView: NSTableView {
 
     func resetWindowFrame() {
-        let totalHeight = CGFloat(min(self.numberOfRows, 10)) * (self.rowHeight + self.intercellSpacing.height)
+        let totalHeight = CGFloat(min(self.numberOfRows, 20)) * (25 + self.intercellSpacing.height)
         var f = self.window?.frame
         let top = NSMaxY(f!)
         let bottom = top - totalHeight
