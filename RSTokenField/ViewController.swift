@@ -11,6 +11,11 @@ import Cocoa
 class ViewController: NSViewController {
 
     var menuItemContext = [String:String]()
+    private let tokenCompletionSections = ["Fruits", "Nuts", "Flowers", "Seeds"]
+    private let tokenCompletionArray =  ["Apple", "Banana", "Pears", "Star Fruit", "Dragon Fruit", "Mango", "Pineapple", "Coconut", "Lychee", "Blackberry", "Papaya", "Blueberry", "Raspberry", "Orange", "Sweet Lime", "Cashew", "Almond", "Grapes", "Peach", "Custard Apple", "Jack fruit", "Chickoo", "Random fruit", "The fruit fox couldn't reach", "My Mom",
+        "My Dad", "Anal fruit", "Plum"]
+    private var dataSource = [AnyObject]()
+    
     
     @IBOutlet var tokenField: RSTokenField! {
         didSet {
@@ -20,7 +25,15 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        let divisor: Int = tokenCompletionArray.count / tokenCompletionSections.count
+        for var i = 0; i < tokenCompletionSections.count; i++ {
+            for var j = divisor * i; j < divisor * (i + 1) ; j++ {
+                if j % divisor == 0 {
+                    dataSource.append(RSTokenItemSection.init(name: tokenCompletionSections[i]))
+                }
+                dataSource.append(RSTokenItem.init(type: tokenCompletionSections[i], title: tokenCompletionArray[j]))
+            }
+        }
     }
 
     override var representedObject: AnyObject? {
@@ -39,22 +52,7 @@ class ViewController: NSViewController {
 
 extension ViewController: RSTokenFieldDelegate {
     func tokenField(tokenField: RSTokenField, var completionsForSubstring subString: String) -> [RSTokenItemType] {
-        let tokenCompletionSections = ["Fruits", "Nuts", "Flowers", "Seeds"]
-        let tokenCompletionArray =  ["Apple", "Banana", "Pears", "Star Fruit", "Dragon Fruit", "Mango", "Pineapple", "Coconut", "Lychee", "Blackberry", "Papaya", "Blueberry", "Raspberry",
-        "Orange", "Sweet Lime", "Cashew", "Almond", "Grapes", "Peach", "Custard Apple", "Jack fruit", "Chickoo", "Random fruit", "The fruit fox couldn't reach", "My Mom",
-        "My Dad", "Anal fruit", "Plum"]
         
-        var dataSource = [AnyObject]()
-        
-        let divisor: Int = tokenCompletionArray.count / tokenCompletionSections.count
-        for var i = 0; i < tokenCompletionSections.count; i++ {
-            for var j = divisor * i; j < divisor * (i + 1) ; j++ {
-                if j % divisor == 0 {
-                    dataSource.append(RSTokenItemSection.init(name: tokenCompletionSections[i]))
-                }
-                dataSource.append(RSTokenItem.init(type: tokenCompletionSections[i], title: tokenCompletionArray[j]))
-            }
-        }
         
         subString = subString.stringByTrimmingCharactersInSet(
             NSCharacterSet.whitespaceAndNewlineCharacterSet()
@@ -138,18 +136,6 @@ extension ViewController: RSTokenFieldDelegate {
     }
 }
 
-extension ViewController: OEXTokenFieldDelegate {
-    func tokenField(tokenField: OEXTokenField!, attachmentCellForRepresentedObject representedObject: AnyObject!) -> NSTextAttachmentCell! {
-        if let tokenFieldCell: OEXTokenFieldCell = tokenField.cell as? OEXTokenFieldCell {
-            if let layoutManager = tokenFieldCell.fieldEditorForView(tokenField)?.layoutManager {
-                let attachmentCell = OEXTokenAttachmentCell(layoutManager: layoutManager)
-                return attachmentCell
-            }
-        }
-        
-        return nil
-    }
-}
 
 class RSMenuItemObject: NSObject {
     var tokenType: String!

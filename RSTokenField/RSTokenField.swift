@@ -95,7 +95,7 @@ class RSTokenField: NSTextField {
                     mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
                     
                     v.tokenView.tokenItem = RSTokenItem(type: type, title: title)
-                    self.tokenArray[index/2] = v.tokenView.tokenItem
+                    self.tokenArray[index/3] = v.tokenView.tokenItem
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
                     mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)

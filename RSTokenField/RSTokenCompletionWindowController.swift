@@ -225,7 +225,7 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
             }
         } else {
             if let _ = self.completionWindow {
-                let r = self.textView?.rangeForCompletion()
+                _ = self.textView?.rangeForCompletion()
                 //self.textView?.replaceCharactersInRange(r!, withString: self.rawStem)
                 self.tearDownWindow()
             }
