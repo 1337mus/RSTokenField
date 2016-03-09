@@ -38,7 +38,7 @@ class ViewController: NSViewController {
 }
 
 extension ViewController: RSTokenFieldDelegate {
-    func tokenField(tokenField: RSTokenField, completionsForSubstring subString: String) -> [RSTokenItemType] {
+    func tokenField(tokenField: RSTokenField, var completionsForSubstring subString: String) -> [RSTokenItemType] {
         let tokenCompletionSections = ["Fruits", "Nuts", "Flowers", "Seeds"]
         let tokenCompletionArray =  ["Apple", "Banana", "Pears", "Star Fruit", "Dragon Fruit", "Mango", "Pineapple", "Coconut", "Lychee", "Blackberry", "Papaya", "Blueberry", "Raspberry",
         "Orange", "Sweet Lime", "Cashew", "Almond", "Grapes", "Peach", "Custard Apple", "Jack fruit", "Chickoo", "Random fruit", "The fruit fox couldn't reach", "My Mom",
@@ -55,6 +55,10 @@ extension ViewController: RSTokenFieldDelegate {
                 dataSource.append(RSTokenItem.init(type: tokenCompletionSections[i], title: tokenCompletionArray[j]))
             }
         }
+        
+        subString = subString.stringByTrimmingCharactersInSet(
+            NSCharacterSet.whitespaceAndNewlineCharacterSet()
+        )
         
         var alphaNumericRange = subString.rangeOfCharacterFromSet(NSCharacterSet.alphanumericCharacterSet())
         var alphaSubstring = ""

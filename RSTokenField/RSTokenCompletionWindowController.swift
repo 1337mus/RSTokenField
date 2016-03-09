@@ -15,7 +15,6 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     
     var completionsArray: [RSTokenItemType] = []
     var textView: RSTokenTextView?
-    var completionStem = ""
     var rawStem = ""
     var completionIndex: Int = 0
     var completionWindow: NSWindow? = nil
@@ -90,7 +89,6 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
         }
         
         self.completionWindow?.orderOut(false)
-        self.completionStem = ""
         self.completionWindow = nil
         self.rawStem = ""
     }
@@ -179,6 +177,7 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     }
     
     override func insertText(insertString: AnyObject) {
+        
         if let _ = self.completionWindow {
             self.rawStem.appendContentsOf(insertString as! String)
         } else {
@@ -191,7 +190,6 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     
     func displayCompletionsForStem(stem: String, forTextView aTextView: RSTokenTextView, forRange stemRange: NSRange) -> Bool {
         self.completionIndex = stemRange.location
-        self.completionStem = stem
         self.textView = aTextView
         self.completionsArray = (aTextView.getCompletionsForStem(stem))
     
@@ -207,7 +205,7 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
                 self.tableView?.selectRowIndexes(NSIndexSet(index: 1), byExtendingSelection: false)
                 
                 // Completion Window Rectangle
-                var rect = aTextView.firstRectForCharacterRange(aTextView.rangeForCompletion(0), actualRange: nil)
+                var rect = aTextView.firstRectForCharacterRange(aTextView.rangeForCompletion(), actualRange: nil)
                 // Push the rectangle down to account for the window inset
                 rect.origin.y -= 10
                 var screenMaxX: CGFloat = 0.0
@@ -227,8 +225,8 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
             }
         } else {
             if let _ = self.completionWindow {
-                let r = self.textView?.rangeForCompletion(0)
-                self.textView?.replaceCharactersInRange(r!, withString: self.rawStem)
+                let r = self.textView?.rangeForCompletion()
+                //self.textView?.replaceCharactersInRange(r!, withString: self.rawStem)
                 self.tearDownWindow()
             }
         }
@@ -237,7 +235,7 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     }
     
     func chooseCompletion(completion: String, forTextView aTextView: RSTokenTextView) {
-        aTextView.insertTokenForText(completion, replacementRange: aTextView.rangeForCompletion(completion.characters.count))
+        aTextView.insertTokenForText(completion, replacementRange: aTextView.rangeForCompletion())
     }
     
     // MARK: TableView Delegate Methods

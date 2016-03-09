@@ -31,6 +31,8 @@ class RSTokenField: NSTextField {
                     let appendedAttributeString = NSMutableAttributedString()
                     
                     var i = false
+                    let whiteSpace = NSMutableAttributedString(string: " ")
+                    
                     for token in newValue.reverse() {
                         var topLevelObjects: NSArray?
                         NSBundle.mainBundle().loadNibNamed("RSTokenView",
@@ -50,9 +52,13 @@ class RSTokenField: NSTextField {
                         attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
                         attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
                         
+                        if !i {
+                            i = true
+                            //appendedAttributeString.appendAttributedString(whiteSpace)
+                        }
+                        appendedAttributeString.appendAttributedString(whiteSpace)
                         appendedAttributeString.appendAttributedString(attributeString)
                         
-                        let whiteSpace = NSMutableAttributedString(string: " ")
                         appendedAttributeString.appendAttributedString(whiteSpace)
                     }
                     
@@ -89,7 +95,7 @@ class RSTokenField: NSTextField {
                     mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
                     
                     v.tokenView.tokenItem = RSTokenItem(type: type, title: title)
-                    self.tokenArray[index] = v.tokenView.tokenItem
+                    self.tokenArray[index/2] = v.tokenView.tokenItem
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
                     mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
@@ -131,8 +137,21 @@ class RSTokenField: NSTextField {
         
         let fieldEditor = self.cell?.fieldEditorForView(self) as! RSTokenTextView
         fieldEditor.textStorage?.setAttributedString(mutableAttrString)
+    }
+    
+    func selectedTokenRangeForGivenRange(aRange: NSRange) -> NSRange {
+        var returnRange: NSRange = NSMakeRange(NSNotFound, NSNotFound)
         
-        fieldEditor.setSelectedRange(NSMakeRange(index, 0))
+        let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
+        mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
+            if let v = value as? RSTextAttachment {
+                if v.tokenView.selected == true && range.location == aRange.location {
+                    returnRange = range
+                }
+            }
+        }
+        
+        return returnRange
     }
 }
 
