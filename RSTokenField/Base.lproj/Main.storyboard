@@ -673,18 +673,18 @@
                         <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
-                            <tokenField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Kzx-cL-NEf" customClass="OEXTokenField">
-                                <rect key="frame" x="38" y="218" width="405" height="35"/>
-                                <tokenFieldCell key="cell" selectable="YES" editable="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" allowsEditingTextAttributes="YES" id="FTv-D4-qRh">
-                                    <font key="font" metaFont="cellTitle"/>
-                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RXB-o5-Cpm" customClass="RSTokenField" customModule="RSTokenField" customModuleProvider="target">
+                                <rect key="frame" x="38" y="219" width="422" height="26"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" allowsEditingTextAttributes="YES" id="EcQ-qX-MdZ" customClass="RSTokenFieldCell" customModule="RSTokenField" customModuleProvider="target">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                                </tokenFieldCell>
-                            </tokenField>
+                                </textFieldCell>
+                            </textField>
                         </subviews>
                     </view>
                     <connections>
-                        <outlet property="tokenField" destination="Kzx-cL-NEf" id="yUy-cX-cMa"/>
+                        <outlet property="tokenField" destination="RXB-o5-Cpm" id="QEl-yK-j2O"/>
                     </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>

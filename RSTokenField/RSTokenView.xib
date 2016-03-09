@@ -9,30 +9,36 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="c22-O7-iKe" customClass="RSTokenView" customModule="RSTokenField" customModuleProvider="target">
-            <rect key="frame" x="0.0" y="0.0" width="149" height="18"/>
+            <rect key="frame" x="0.0" y="0.0" width="185" height="18"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
-                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2zg-jC-YHf">
-                    <rect key="frame" x="0.0" y="-1" width="51" height="19"/>
-                    <buttonCell key="cell" type="roundRect" title="Title" bezelStyle="roundedRect" image="NSGoRightTemplate" imagePosition="right" alignment="right" state="on" imageScaling="proportionallyDown" inset="2" id="lUK-dW-y9V">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="system" size="16"/>
-                    </buttonCell>
-                </button>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oRL-Wn-Cf3">
-                    <rect key="frame" x="55" y="0.0" width="93" height="17"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Label" id="mKl-De-rOp">
-                        <font key="font" metaFont="system" size="16"/>
+                    <rect key="frame" x="96" y="0.0" width="89" height="17"/>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Label" drawsBackground="YES" id="mKl-De-rOp">
+                        <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlHighlightColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2qf-b7-w4j">
+                    <rect key="frame" x="73" y="-1" width="20" height="20"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="NSGoRightTemplate" id="9Sj-ca-R6K"/>
+                </imageView>
+                <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SrX-EK-9sa" userLabel="Type">
+                    <rect key="frame" x="0.0" y="0.0" width="75" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" title="Title" placeholderString="" drawsBackground="YES" id="f6I-6l-CtA">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlHighlightColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
             </subviews>
             <connections>
+                <outlet property="imageView" destination="2qf-b7-w4j" id="ifw-rn-fQR"/>
                 <outlet property="title" destination="oRL-Wn-Cf3" id="Gj4-Qj-ecb"/>
-                <outlet property="typeButton" destination="2zg-jC-YHf" id="4Cm-nA-jjz"/>
+                <outlet property="type" destination="SrX-EK-9sa" id="hDd-2L-19l"/>
             </connections>
-            <point key="canvasLocation" x="254" y="268"/>
+            <point key="canvasLocation" x="232.5" y="268"/>
         </customView>
     </objects>
     <resources>

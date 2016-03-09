@@ -16,12 +16,13 @@ class RSTextAttachmentCell: NSTextAttachmentCell {
     
     override func drawWithFrame(cellFrame: NSRect, inView controlView: NSView?) {
         if let img = self.image {
-            img .drawInRect(cellFrame, fromRect: NSZeroRect, operation: .CompositeSourceOver, fraction: 1.0, respectFlipped: true, hints: nil)
+            let rect = NSMakeRect(cellFrame.origin.x , cellFrame.origin.y + 3, cellFrame.size.width, cellFrame.size.height)
+            img .drawInRect(rect, fromRect: NSZeroRect, operation: .CompositeSourceOver, fraction: 1.0, respectFlipped: true, hints: nil)
         }
     }
     
     func scaleImageSize(toHeight height: CGFloat) -> NSRect {
-        var scalingFactor: CGFloat = 1.0
+        var scalingFactor: CGFloat = 0.9
         let imageSize = self.image?.size
         
         if height < imageSize?.height {
@@ -31,5 +32,10 @@ class RSTextAttachmentCell: NSTextAttachmentCell {
         return NSMakeRect(0, 0, (imageSize?.width)! * scalingFactor, (imageSize?.height)! * scalingFactor)
     }
     
-    
+    override func wantsToTrackMouse() -> Bool {
+        return true
+    }
+    override func trackMouse(theEvent: NSEvent, inRect cellFrame: NSRect, ofView controlView: NSView?, untilMouseUp flag: Bool) -> Bool {
+        return true
+    }
 }
