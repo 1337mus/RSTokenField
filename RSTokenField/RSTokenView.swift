@@ -45,6 +45,20 @@ import Cocoa
         }
     }
     
+    var typeSelected: Bool! = false {
+        willSet {
+            var textColor = NSColor.blackColor()
+            var backgroundColor = NSColor.controlHighlightColor()
+            if newValue == true {
+                textColor = NSColor.whiteColor()
+                backgroundColor = NSColor.disabledControlTextColor()
+            }
+            
+            self.type.textColor = textColor
+            self.type.backgroundColor = backgroundColor
+        }
+    }
+    
     override func resizeSubviewsWithOldSize(oldSize: NSSize) {
         super.resizeSubviewsWithOldSize(oldSize)
         

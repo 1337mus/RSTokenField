@@ -45,6 +45,17 @@ class ViewController: NSViewController {
     func action(sender: NSMenuItem) {
         if let menuItem = sender.representedObject, let item = menuItem as? RSMenuItemObject {
             self.tokenField.replaceToken(withType: item.tokenType, tokenTitle: item.tokenTitle, atIndex: item.tokenIndex)
+            self.tokenField.setToken(typeOnly: true, selected: false, atIndex: item.tokenIndex)
+        }
+    }
+    
+    func menuDismissed(notification: NSNotification) {
+        if let menu: NSMenu = notification.object as? NSMenu {
+            menu.itemArray.forEach({ (item) -> () in
+                if let menuItem = item.representedObject, let obj = menuItem as? RSMenuItemObject {
+                    self.tokenField.setToken(typeOnly: true, selected: false, atIndex: obj.tokenIndex)
+                }
+            })
         }
     }
 
@@ -125,6 +136,7 @@ extension ViewController: RSTokenFieldDelegate {
     
     func tokenField(tokenField: RSTokenField, menuForToken string: String, atIndex index: Int) -> NSMenu {
         let test = NSMenu()
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "menuDismissed:", name: NSMenuDidEndTrackingNotification, object: test)
         let itemNames = ["A", "B", "Entire Message"]
         for name in itemNames {
             let item = NSMenuItem.init(title: name, action: "action:", keyEquivalent: "")
@@ -148,3 +160,4 @@ class RSMenuItemObject: NSObject {
         self.tokenIndex = index
     }
 }
+

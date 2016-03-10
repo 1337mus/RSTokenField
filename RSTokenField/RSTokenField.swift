@@ -30,7 +30,6 @@ class RSTokenField: NSTextField {
                 if (self._tokenArray! != newValue) {
                     let appendedAttributeString = NSMutableAttributedString()
                     
-                    var i = false
                     let whiteSpace = NSMutableAttributedString(string: " ")
                     
                     for token in newValue.reverse() {
@@ -52,10 +51,6 @@ class RSTokenField: NSTextField {
                         attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
                         attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
                         
-                        if !i {
-                            i = true
-                            //appendedAttributeString.appendAttributedString(whiteSpace)
-                        }
                         appendedAttributeString.appendAttributedString(whiteSpace)
                         appendedAttributeString.appendAttributedString(attributeString)
                         
@@ -111,18 +106,22 @@ class RSTokenField: NSTextField {
         
     }
     
-    func setToken(selected: Bool, atIndex index: Int) {
+    func setToken(typeOnly type: Bool, selected: Bool, atIndex index: Int) {
         let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let v = value as? RSTextAttachment {
                 if range.location == index {
                     mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
-                    v.tokenView.selected = selected
+                    if type {
+                        v.tokenView.typeSelected = selected
+                    } else {
+                        v.tokenView.selected = selected
+                    }
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
                     mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
                     
-                } else {
+                } else if !type {
                     mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
                     v.tokenView.selected = !selected
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)

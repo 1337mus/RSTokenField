@@ -22,7 +22,7 @@ class RSTextAttachmentCell: NSTextAttachmentCell {
     }
     
     func scaleImageSize(toHeight height: CGFloat) -> NSRect {
-        var scalingFactor: CGFloat = 0.9
+        var scalingFactor: CGFloat = 1
         let imageSize = self.image?.size
         
         if height < imageSize?.height {
