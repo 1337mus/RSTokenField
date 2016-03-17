@@ -137,6 +137,7 @@ extension ViewController: RSTokenFieldDelegate {
     func tokenField(tokenField: RSTokenField, menuForToken string: String, atIndex index: Int) -> NSMenu {
         let test = NSMenu()
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "menuDismissed:", name: NSMenuDidEndTrackingNotification, object: test)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "menuDisplayed:", name: NSMenuDidBeginTrackingNotification, object: test)
         let itemNames = ["A", "B", "Entire Message"]
         for name in itemNames {
             let item = NSMenuItem.init(title: name, action: "action:", keyEquivalent: "")

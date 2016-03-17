@@ -66,14 +66,14 @@
 		DB54D51D1C839AF5009DADBF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DB54D52A1C83A2E9009DADBF /* RSTokenField-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RSTokenField-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
 		DB54D5371C83E709009DADBF /* RSTokenView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RSTokenView.xib; sourceTree = "<group>"; };
-		DB54D5391C83E9F7009DADBF /* RSTokenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenView.swift; sourceTree = "<group>"; };
+		DB54D5391C83E9F7009DADBF /* RSTokenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RSTokenView.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		DB54D53B1C83ED02009DADBF /* RSTokenItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenItem.swift; sourceTree = "<group>"; };
 		DB54D53D1C83F554009DADBF /* RSTextAttachmentCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTextAttachmentCell.swift; sourceTree = "<group>"; };
-		DB54D5401C8505BE009DADBF /* RSTokenField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenField.swift; sourceTree = "<group>"; };
+		DB54D5401C8505BE009DADBF /* RSTokenField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RSTokenField.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		DB54D5421C85094D009DADBF /* RSTokenFieldCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenFieldCell.swift; sourceTree = "<group>"; };
-		DB54D5441C850BF5009DADBF /* RSTokenTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenTextView.swift; sourceTree = "<group>"; };
+		DB54D5441C850BF5009DADBF /* RSTokenTextView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RSTokenTextView.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		DB54D5461C854BC7009DADBF /* NSAttributedString+RSTokenField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSAttributedString+RSTokenField.swift"; sourceTree = "<group>"; };
-		DB54D5481C854DD0009DADBF /* RSTextAttachment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTextAttachment.swift; sourceTree = "<group>"; };
+		DB54D5481C854DD0009DADBF /* RSTextAttachment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RSTextAttachment.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		DB54D54A1C85675D009DADBF /* RSTokenCompletionWindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenCompletionWindowController.swift; sourceTree = "<group>"; };
 		DB54D54C1C856DB7009DADBF /* RSTokenCompletionTableView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenCompletionTableView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
