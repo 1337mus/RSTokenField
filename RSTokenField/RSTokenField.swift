@@ -1,4 +1,4 @@
-
+//
 //
 //  RSTokenField.swift
 //  RSTokenField
@@ -21,6 +21,7 @@ class RSTokenField: NSTextField {
 
     private var fieldEditor: RSTokenTextView? = nil
     private var textSelected: Bool = false
+    private var textSelectedAll: Bool = false
     
     private var _tokenArray: [RSTokenItem]? = nil
     
@@ -157,13 +158,18 @@ class RSTokenField: NSTextField {
         }
     }
     
+    //TODO: change the method name to toggle token selected status or token visibility
     func setToken(selected: Bool, atIndex index: Int) {
+        self.setToken(selected, atIndex: index, force: false)
+    }
+    
+    func setToken(selected: Bool, atIndex index: Int, force: Bool) {
         let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let v = value as? RSTextAttachment {
                 if range.location == index {
                     mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
-                    v.tokenView.selected = selected
+                    v.tokenView.selected = force ? selected : !v.tokenView.selected
                     
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
@@ -207,35 +213,138 @@ extension RSTokenField: NSTextViewDelegate {
         return true
     }
     
-    /*func textView(textView: NSTextView, willChangeSelectionFromCharacterRange oldSelectedCharRange: NSRange, toCharacterRange newSelectedCharRange: NSRange) -> NSRange {
-        return NSMakeRange(NSNotFound, 0)
-    }*/
-    
     func textViewDidChangeSelection(notification: NSNotification) {
-        if let fieldEditor = self.fieldEditor, textStorage = fieldEditor.textStorage, userInfo = notification.userInfo, oldRange: NSRange = userInfo["NSOldSelectedCharacterRange"] as? NSRange, newRange: NSRange = fieldEditor.selectedRange {
-            /*let selectedText = (fieldEditor.string! as NSString).substringWithRange(fieldEditor.selectedRange)
-            NSLog("selected: %@ - %@", selectedText, NSStringFromRange(fieldEditor.selectedRange))*/
-            
+        if let fieldEditor = self.fieldEditor, textStorage = fieldEditor.textStorage, userInfo = notification.userInfo, var oldRange: NSRange = userInfo["NSOldSelectedCharacterRange"] as? NSRange, let newRange: NSRange = fieldEditor.selectedRange {
+            //let selectedText = (fieldEditor.string! as NSString).substringWithRange(fieldEditor.selectedRange)
+            //NSLog("selected: %@ - %@", selectedText, NSStringFromRange(fieldEditor.selectedRange))
+
             if newRange.length == 0 {
                 return
-            } else if oldRange.location == newRange.location && oldRange.length == newRange.length {
+            }
+            if oldRange.location == newRange.location && oldRange.length == newRange.length {
                 return
-            } else if self.textSelected {
-                self.textSelected = false
+            }
+            if self.textSelected {
+                return
+            }
+            if self.textSelectedAll {
                 return
             }
             
-            let charIndex = newRange.location
+            var charIndex = 0
+            var startIndex = 0
+            var endIndex = 0
+            
+            // We are going right here
+            if oldRange.location < newRange.location || NSMaxRange(newRange) > NSMaxRange(oldRange) {
+                charIndex = newRange.location + oldRange.length
+                startIndex = newRange.location
+                endIndex = newRange.location + newRange.length
+            } else {
+                //Left
+                charIndex = newRange.location
+                startIndex = newRange.location
+                endIndex = newRange.location + newRange.length
+            }
+            
+            var selectedRange = NSMakeRange(0, 0)
             var hideCaret = false
             
-            if textStorage.tokenStringAtIndex(charIndex) != nil {
+            //Close completion handler window
+            fieldEditor.abandonCompletion()
+            
+            for var i = startIndex; i <= endIndex; i++ {
+                self.textSelected = true
+                hideCaret = true
+                
+                if textStorage.tokenStringAtIndex(i) != nil {
+                    self.setToken(true, atIndex: i)
+                    if newRange.location < oldRange.location {
+                        selectedRange = NSMakeRange(i - 1, 0)
+                        i++
+                    } else {
+                        selectedRange = NSMakeRange(i + 2, 0)
+                    }
+                    
+                } else {
+                    let string = textStorage.string as NSString
+                    if i >= string.length { continue }
+                    let unichar = string.characterAtIndex(i)
+                    let unicharString = Character(UnicodeScalar(unichar))
+                    if unicharString == " " && ((i > 0 && textStorage.tokenStringAtIndex(i - 1) != nil) || (i < textStorage.length && textStorage.tokenStringAtIndex(i + 1) != nil)) {
+                        // These are whitespaces surrounding tokens, no need to do anything here
+                        if newRange.location < oldRange.location {
+                            self.setToken(true, atIndex: i - 1)
+                            selectedRange = NSMakeRange(i - 2, 0)
+                            i++
+                        }
+                        continue
+                    } else {
+                        var area = NSMakeRange(i, 1)
+                        
+                        if newRange.location < oldRange.location {
+                            selectedRange = NSMakeRange(i, 0)
+                            area = NSMakeRange(i, 1)
+                            if newRange.length != textStorage.length {
+                                i++
+                            } else {
+                                selectedRange = NSMakeRange(i - 1, 0)
+                                area = NSMakeRange(i - 1, 2)
+                            }
+                        } else {
+                            selectedRange = NSMakeRange(i + 1, 0)
+                            area = NSMakeRange(i, 1)
+                        }
+                        
+                        textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                        textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                        
+ 
+                    }
+                }
+            }
+            
+            // Handle full text Selection
+            if (newRange.location == 0) && newRange.length == textStorage.length && newRange.length > 0 {
+                self.textSelectedAll = true
+                selectedRange = NSMakeRange(textStorage.length, 0)
+                oldRange = NSMakeRange(0, 0)
+            }
+            
+            // Entire Text is selected (cmd + A)
+            /*if (newRange.location == 0) && newRange.length == textStorage.length && newRange.length > 0 {
+                self.textSelected = true
+                hideCaret = true
+                
+                for var i = 0; i < textStorage.length; i++ {
+                    if textStorage.tokenStringAtIndex(i) != nil {
+                        self.setToken(true, atIndex: i)
+                    } else {
+                        let string = textStorage.string as NSString
+                        let unichar = string.characterAtIndex(i)
+                        let unicharString = Character(UnicodeScalar(unichar))
+                        if unicharString == " " && ((i > 0 && textStorage.tokenStringAtIndex(i - 1) != nil) || (i < textStorage.length && textStorage.tokenStringAtIndex(i + 1) != nil)) {
+                            // These are whitespaces surrounding tokens, no need to do anything here
+                            continue
+                        } else {
+                            let area = NSMakeRange(i, 1)
+                            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                            textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                        }
+                    }
+                }
+                
+                self.textSelectedAll = true
+                selectedRange = NSMakeRange(textStorage.length, 0)
+                oldRange = NSMakeRange(0, 0)
+            } else if textStorage.tokenStringAtIndex(charIndex) != nil {
                 self.textSelected = true
                 self.setToken(true, atIndex: charIndex)
                 hideCaret = true
                 if newRange.location < oldRange.location {
-                    fieldEditor.setSelectedRange(NSMakeRange(charIndex - 1, 0))
+                    selectedRange = NSMakeRange(charIndex - 1, 0)
                 } else {
-                    fieldEditor.setSelectedRange(NSMakeRange(charIndex + 2, 0))
+                    selectedRange = NSMakeRange(charIndex + 2, 0)
                 }
             } else {
                 let string = textStorage.string as NSString
@@ -246,43 +355,55 @@ extension RSTokenField: NSTextViewDelegate {
                     
                     if newRange.location < oldRange.location {
                         self.setToken(true, atIndex: charIndex - 1)
-                        fieldEditor.setSelectedRange(NSMakeRange(charIndex - 2, 0))
+                        selectedRange = NSMakeRange(charIndex - 2, 0)
                     } else {
                         self.setToken(true, atIndex: charIndex + 1)
-                        fieldEditor.setSelectedRange(NSMakeRange(charIndex + 3, 0))
+                        selectedRange = NSMakeRange(charIndex + 3, 0)
                     }
                     
                     hideCaret = true
                 } else {
                     self.textSelected = false
                     let area = NSMakeRange(charIndex, 1)
-                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-                    textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                    selectedRange = area
+                    if let _ = textStorage.attribute(NSBackgroundColorAttributeName, atIndex: charIndex, effectiveRange: nil) {
+                        textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                    } else {
+                        textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                        textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                    }
                 }
-            }
+            }*/
             
-            if newRange.location < oldRange.location {
-                fieldEditor.lastSelectedTokenPosition.direction = .Left
-            } else {
-                fieldEditor.lastSelectedTokenPosition.direction = .Right
-            }
             
+            // Set Last Selected Token Ranges (Both old and new)
             if !fieldEditor.lastSelectedTokenPosition.selected {
                 fieldEditor.lastSelectedTokenPosition.selected = true
                 fieldEditor.lastSelectedTokenPosition.oldRange = oldRange
             }
             
-            fieldEditor.lastSelectedTokenPosition.newRange = newRange
+            if newRange.location < fieldEditor.lastSelectedTokenPosition.oldRange.location {
+                fieldEditor.lastSelectedTokenPosition.direction = .Left
+            } else {
+                fieldEditor.lastSelectedTokenPosition.direction = .Right
+            }
+            
             
             if hideCaret {
                 fieldEditor.insertionPointColor = NSColor.whiteColor()
+                fieldEditor.lastSelectedTokenPosition.newRange = selectedRange
+                fieldEditor.setSelectedRange(selectedRange)
             } else {
+                
+                fieldEditor.lastSelectedTokenPosition.newRange = newRange
                 fieldEditor.insertionPointColor = NSColor.blackColor()
             }
             
             //TODO: rename this flag to something meaningful
             fieldEditor.mouseWasDragged = true
-        
+            self.textSelectedAll = false
+            self.textSelected = false
+            
         }
     }
 }
