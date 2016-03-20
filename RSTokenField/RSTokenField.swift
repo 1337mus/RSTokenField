@@ -115,8 +115,8 @@ class RSTokenField: NSTextField {
                     v.tokenView.typeSelected = typeSelected
                     
                     var arrayIndex = index/3
-                    if arrayIndex == textStorage.length {
-                        arrayIndex--
+                    if arrayIndex >= self.tokenArray.count {
+                        arrayIndex = self.tokenArray.count - 1
                     }
                     
                     if arrayIndex < 0 {
