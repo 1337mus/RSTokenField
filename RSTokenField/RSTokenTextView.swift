@@ -513,9 +513,10 @@ extension RSTokenTextView {
         guard let textContainer = self.textContainer else { return }
         
         let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+        let appliedPos = CGPointMake(pos.x, self.frame.size.height/2)
         
         var fraction: CGFloat = 0
-        let glyphIndex = layoutManager.glyphIndexForPoint(pos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
+        let glyphIndex = layoutManager.glyphIndexForPoint(appliedPos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
         let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
         let bounds = layoutManager.boundingRectForGlyphRange(NSMakeRange(glyphIndex, 1), inTextContainer: textContainer)
         
@@ -526,7 +527,7 @@ extension RSTokenTextView {
             self.lastSelectedTokenPosition.direction = .Left
         }
         
-        if NSPointInRect(pos, bounds) {
+        if NSPointInRect(appliedPos, bounds) {
             if fraction < 0.5 {
                 var area: NSRange = NSMakeRange(NSNotFound, NSNotFound)
                 if let attribute = (self.textStorage?.attribute(NSAttachmentAttributeName, atIndex: charIndex, effectiveRange: &area)) {
@@ -543,7 +544,6 @@ extension RSTokenTextView {
                         //Nothing to do here
                     } else {
                         let area = NSMakeRange(charIndex, 1)
-                        textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
                         textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
                     }
                 }
@@ -585,20 +585,28 @@ extension RSTokenTextView {
         var selectedRange = NSMakeRange(0, 0)
         
         if mouseWasDragged {
-            if (textStorage.tokenStringAtIndex(charIndex) != nil) {
-                if self.lastSelectedTokenPosition.direction == .Right {
+            
+            if self.lastSelectedTokenPosition.direction == .Right {
+                if (textStorage.tokenStringAtIndex(charIndex) != nil) {
                     if charIndex < textStorage.length - 1 {
                         selectedRange = NSMakeRange(charIndex + 2, 0)
                     } else {
                         selectedRange = NSMakeRange(textStorage.length, 0)
                     }
                 } else {
+                    selectedRange = NSMakeRange(charIndex, 0)
+                }
+            } else {
+                if (textStorage.tokenStringAtIndex(charIndex) != nil) {
                     if charIndex > 0 {
                         selectedRange = NSMakeRange(charIndex - 1, 0)
                     } else {
                         selectedRange = NSMakeRange(0, 0)
                     }
+                } else {
+                    selectedRange = NSMakeRange(charIndex, 0)
                 }
+                
             }
             
             self.lastSelectedTokenPosition.newRange = selectedRange
