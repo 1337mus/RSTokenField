@@ -10,6 +10,7 @@ import Cocoa
 
 class RSTokenTextView: NSTextView {
 
+    //MARK: Public Properties
     struct RSTokenPosition {
         enum Direction {
             case Left
@@ -24,12 +25,30 @@ class RSTokenTextView: NSTextView {
     }
     
     var lastSelectedTokenPosition = RSTokenPosition()
-    private var lastEnteredStem: String = ""
     var mouseWasDragged: Bool = false
     
+    //MARK: Private Properties
+    private var lastEnteredStem: String = ""
+    
+    //MARK: Overrides
     override func resignFirstResponder() -> Bool {
         self.tokenizeRemainingText()
         return super.resignFirstResponder()
+    }
+    
+    //MARK: Text Insertion Methods
+    func insertTokenForText(tokenText: String, replacementRange: NSRange) {
+        let insertionLocation = self.selectedRange().location
+        let delegate = self.delegate as! RSTokenField
+        if delegate.shouldAddToken(tokenText, atTokenIndex: self.countOfTokensInRange(NSMakeRange(0, replacementRange.location))) {
+            // Used for replacing the token on double click
+            self.lastEnteredStem = RSTokenCompletionWindowController.sharedInstance.rawStem
+            let insertiontext = self.tokenForString(tokenText)
+            let delegate = self.delegate as! RSTokenField
+            super.insertText(insertiontext, replacementRange: replacementRange)
+            delegate.textView(self, didChangeTokens: self.tokenArray())
+            self.setSelectedRange(NSMakeRange(insertionLocation + 2, 0))
+        }
     }
     
     override func insertText(aString: AnyObject, replacementRange: NSRange) {
@@ -52,7 +71,7 @@ class RSTokenTextView: NSTextView {
             } else {
                 let startingStemRange = self.rangeForCompletion()
                 let selectionIndex = self.selectedRange().location - startingStemRange.location
-                let replacedText = ((self.textStorage?.string)! as NSString).substringWithRange(startingStemRange)
+                let replacedText = (textStorage.string as NSString).substringWithRange(startingStemRange)
                 
                 let startingStem = NSMutableString(string: replacedText)
                 startingStem.insertString(aString as! String, atIndex: selectionIndex)
@@ -60,7 +79,7 @@ class RSTokenTextView: NSTextView {
                 completionController.insertText(startingStem)
             }
             
-            if insertionIndex <= self.textStorage?.length {
+            if insertionIndex <= textStorage.length {
                 let stemRange = self.completionRange()
                 
                 completionController.displayCompletionsForStem(completionController.rawStem, forTextView: self, forRange: stemRange)
@@ -82,13 +101,27 @@ class RSTokenTextView: NSTextView {
             return
         } else if aSelector == "moveToLeftEndOfLine:" {
             (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
+            self.lastSelectedTokenPosition = RSTokenPosition()
+            self.mouseWasDragged = false
+            
             self.setSelectedRange(NSMakeRange(0, 0))
+            
+            self.insertionPointColor = NSColor.blackColor()
+            let area = NSMakeRange(0, textStorage.length)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
         } else if aSelector == "moveToRightEndOfLine:" {
             (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
+            self.lastSelectedTokenPosition = RSTokenPosition()
+            self.mouseWasDragged = false
+            
             self.setSelectedRange(NSMakeRange(textStorage.length, 0))
+            
+            self.insertionPointColor = NSColor.blackColor()
+            let area = NSMakeRange(0, textStorage.length)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
         } else if aSelector == "deleteBackward:" {
-            if mouseWasDragged {
-                mouseWasDragged = false
+            if self.mouseWasDragged {
+                self.mouseWasDragged = false
                 
                 var deleteRange = NSMakeRange(0, 0)
                 
@@ -100,18 +133,17 @@ class RSTokenTextView: NSTextView {
                 
                 NSLog("Delete Range Location is %d and Length %d", deleteRange.location, abs(deleteRange.length))
                 
-                self.textStorage?.replaceCharactersInRange(deleteRange, withString: "")
+                textStorage.replaceCharactersInRange(deleteRange, withString: "")
                 self.insertionPointColor = NSColor.blackColor()
                 
                 self.lastSelectedTokenPosition = RSTokenPosition()
                 return
             }
             
-            //let currentTokens = self.tokenArray()
             var finalSelectedRange = 0
             if self.selectedRange.length > 0 {
                 let deleteRange = self.selectedRange
-                self.textStorage?.replaceCharactersInRange(deleteRange, withString: "")
+                textStorage.replaceCharactersInRange(deleteRange, withString: "")
                 self.setSelectedRange(NSMakeRange(deleteRange.location, 0))
                 if completionController.isDisplayingCompletions() {
                     self.abandonCompletion()
@@ -126,7 +158,7 @@ class RSTokenTextView: NSTextView {
                 }
                 
                 if selectedTokenIndex.location != NSNotFound {
-                    self.textStorage?.replaceCharactersInRange(NSMakeRange(deleteIndex, 1), withString: "")
+                    textStorage.replaceCharactersInRange(NSMakeRange(deleteIndex, 1), withString: "")
                     finalSelectedRange = deleteIndex - 1
                     self.insertionPointColor = NSColor.blackColor()
                 } else {
@@ -139,7 +171,7 @@ class RSTokenTextView: NSTextView {
                         self.insertionPointColor = NSColor.whiteColor()
                     } else {
                         let deleteRange = ((self.textStorage?.string)! as NSString).rangeOfComposedCharacterSequenceAtIndex(deleteIndex + 1)
-                        self.textStorage?.replaceCharactersInRange(deleteRange, withString: "")
+                        textStorage.replaceCharactersInRange(deleteRange, withString: "")
                         finalSelectedRange = deleteRange.location
                         if completionController.isDisplayingCompletions() {
                             completionController.tearDownWindow()
@@ -148,11 +180,6 @@ class RSTokenTextView: NSTextView {
                     }
                 }
             }
-            
-           /* if self.tokenArray() != currentTokens {
-                let delegate = self.delegate as! RSTokenField
-                delegate.textView(self, didChangeTokens: self.tokenArray())
-            }*/
             
             self.setSelectedRange(NSMakeRange(finalSelectedRange, 0))
             
@@ -177,8 +204,8 @@ class RSTokenTextView: NSTextView {
                     self.setSelectedRange(NSMakeRange(insertionIndex, 0))
                 }
                 self.insertionPointColor = NSColor.blackColor()
-                let area = NSMakeRange(0, (self.textStorage?.length)!)
-                self.textStorage?.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                let area = NSMakeRange(0, textStorage.length)
+                textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
                 
                 self.lastSelectedTokenPosition = RSTokenPosition()
                 mouseWasDragged = false
@@ -209,7 +236,7 @@ class RSTokenTextView: NSTextView {
                 }
             }
         } else if aSelector == "moveRight:" {
-            if mouseWasDragged {
+            if self.mouseWasDragged {
                 (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
                 
                 var insertionIndex = 0
@@ -226,42 +253,49 @@ class RSTokenTextView: NSTextView {
                     self.setSelectedRange(NSMakeRange(insertionIndex, 0))
                 }
                 self.insertionPointColor = NSColor.blackColor()
-                let area = NSMakeRange(0, (self.textStorage?.length)!)
+                let area = NSMakeRange(0, textStorage.length)
                 textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
                 
+                //Reset Selected Token variables
                 self.lastSelectedTokenPosition = RSTokenPosition()
-                mouseWasDragged = false
+                self.mouseWasDragged = false
+                
                 return
-            }
-            
-            self.abandonCompletion()
-            
-            let selectedRange = self.selectedRange()
-            if selectedRange.location >= 0 && selectedRange.location <= self.textStorage?.length {
-                let selectedIndex = selectedRange.location + 1
-                if self.insertionPointColor == NSColor.whiteColor() {
-                    let nearestSelectedRange = (self.delegate as! RSTokenField).selectedTokenRangeForGivenRange(NSMakeRange(selectedRange.location + 1, 0))
-                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedRange.location - 1)
-                    self.insertionPointColor = NSColor.blackColor()
-                    if nearestSelectedRange.location == NSNotFound {
-                        self.setSelectedRange(NSMakeRange(selectedRange.location, 0))
+            } else {
+                self.abandonCompletion()
+                
+                let selectedRange = self.selectedRange()
+                if selectedRange.location >= 0 && selectedRange.location <= self.textStorage?.length {
+                    let selectedIndex = selectedRange.location + 1
+                    if self.insertionPointColor == NSColor.whiteColor() {
+                        let nearestSelectedRange = (self.delegate as! RSTokenField).selectedTokenRangeForGivenRange(NSMakeRange(selectedRange.location + 1, 0))
+                        (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedRange.location - 1)
+                        self.insertionPointColor = NSColor.blackColor()
+                        if nearestSelectedRange.location == NSNotFound {
+                            self.setSelectedRange(NSMakeRange(selectedRange.location, 0))
+                        } else {
+                            self.setSelectedRange(NSMakeRange(nearestSelectedRange.location + 2, 0))
+                        }
+                        return
+                    } else if (textStorage.tokenStringAtIndex(selectedIndex) != nil) {
+                        (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedIndex)
+                        self.setSelectedRange(NSMakeRange(selectedIndex + 2, 0))
+                        self.insertionPointColor = NSColor.whiteColor()
+                        return
                     } else {
-                        self.setSelectedRange(NSMakeRange(nearestSelectedRange.location + 2, 0))
+                        self.insertionPointColor = NSColor.blackColor()
                     }
-                    return
-                } else if ((self.textStorage?.tokenStringAtIndex(selectedIndex)) != nil) {
-                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedIndex)
-                    self.setSelectedRange(NSMakeRange(selectedIndex + 2, 0))
-                    self.insertionPointColor = NSColor.whiteColor()
-                    return
-                } else {
-                    self.insertionPointColor = NSColor.blackColor()
                 }
             }
         }
         super.doCommandBySelector(aSelector)
     }
     
+    
+}
+
+//MARK: Helper Methods
+extension RSTokenTextView {
     
     //MARK: Token Methods
     func tokenForString(aString: String) -> NSAttributedString {
@@ -321,21 +355,6 @@ class RSTokenTextView: NSTextView {
             }
         }
         return tokenArray
-    }
-    
-    //TODO: Remove this if not needed
-    func setTokenArray(tokenArray: [RSTokenItemType]) {
-        let attributedString = NSMutableAttributedString.init()
-        
-        for token in tokenArray.reverse() {
-            if let t = token as? RSTokenItem {
-                attributedString.appendAttributedString(self.tokenForString(t.tokenTitle))
-            } else if let t = token as? RSTokenItemSection {
-                let sectionName = NSAttributedString.init(string: t.sectionName, attributes: [NSFontAttributeName : NSFont.systemFontOfSize(12)])
-                attributedString.appendAttributedString(sectionName)
-            }
-        }
-        //self.textStorage?.setAttributedString(attributedString)
     }
     
     func tokenizeRemainingText() {
@@ -398,21 +417,6 @@ class RSTokenTextView: NSTextView {
             let attributesRange = self.rangeForCompletion()
             self.setSelectedRange(NSMakeRange(min((self.textStorage?.length)!,attributesRange.location + attributesRange.length - 1), 0))
             completionHandler.tearDownWindow()
-        }
-    }
-    
-    //MARK: Text Insertion Methods
-    func insertTokenForText(tokenText: String, replacementRange: NSRange) {
-        let insertionLocation = self.selectedRange().location
-        let delegate = self.delegate as! RSTokenField
-        if delegate.shouldAddToken(tokenText, atTokenIndex: self.countOfTokensInRange(NSMakeRange(0, replacementRange.location))) {
-            // Used for replacing the token on double click
-            self.lastEnteredStem = RSTokenCompletionWindowController.sharedInstance.rawStem
-            let insertiontext = self.tokenForString(tokenText)
-            let delegate = self.delegate as! RSTokenField
-            super.insertText(insertiontext, replacementRange: replacementRange)
-            delegate.textView(self, didChangeTokens: self.tokenArray())
-            self.setSelectedRange(NSMakeRange(insertionLocation + 2, 0))
         }
     }
 
@@ -578,8 +582,10 @@ extension RSTokenTextView {
         guard let textContainer = self.textContainer else { return }
         
         let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+        let appliedPos = CGPointMake(pos.x, self.frame.size.height/2)
+        
         var fraction: CGFloat = 0
-        let glyphIndex = layoutManager.glyphIndexForPoint(pos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
+        let glyphIndex = layoutManager.glyphIndexForPoint(appliedPos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
         
         let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
         var selectedRange = NSMakeRange(0, 0)
@@ -606,24 +612,11 @@ extension RSTokenTextView {
                 } else {
                     selectedRange = NSMakeRange(charIndex, 0)
                 }
-                
             }
             
             self.lastSelectedTokenPosition.newRange = selectedRange
             self.insertionPointColor = NSColor.whiteColor()
             self.setSelectedRange(selectedRange)
         }
-    }
-    
-    
-    private func indexLiesBetweenSelectedRanges(index: Int) -> Bool {
-        if self.lastSelectedTokenPosition.selected {
-            let x = abs(self.lastSelectedTokenPosition.newRange.location - index)
-            let y = abs(self.lastSelectedTokenPosition.oldRange.location - index)
-            let z = abs(self.lastSelectedTokenPosition.oldRange.location - self.lastSelectedTokenPosition.newRange.location)
-            
-            return (x + y) == z
-        }
-        return false
     }
 }

@@ -26,10 +26,6 @@ class RSTokenFieldCell: NSTextFieldCell, NSTextViewDelegate {
     override func selectWithFrame(aRect: NSRect, inView controlView: NSView, editor textObj: NSText, delegate anObject: AnyObject?, start selStart: Int, length selLength: Int) {
         super.selectWithFrame(aRect, inView: controlView, editor: textObj, delegate: anObject, start: selStart, length: selLength)
         let textView = textObj as! RSTokenTextView
-        let controlView = controlView as! RSTokenField
-        if let _ = controlView.tokenArray {
-            textView.setTokenArray(controlView.tokenArray)
-        }
         textObj.selectedRange = NSMakeRange(textView.textStorage!.length, 0)
     }
     
