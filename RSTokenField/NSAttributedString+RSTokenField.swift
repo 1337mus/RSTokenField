@@ -40,4 +40,14 @@ extension NSAttributedString {
         }
         return nil
     }
+    
+    func isTokenAtIndexSelected(index: Int) -> Bool {
+        if index < self.length {
+            let attribute = self.attribute(NSAttachmentAttributeName, atIndex: index, effectiveRange: nil)
+            if attribute is RSTextAttachment {
+                return (attribute as! RSTextAttachment).tokenView.selected
+            }
+        }
+        return false
+    }
 }

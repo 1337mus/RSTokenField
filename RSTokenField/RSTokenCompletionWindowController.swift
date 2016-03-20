@@ -263,12 +263,12 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
                     }
                 }
                 
-                sectionHeader?.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
+                sectionHeader!.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
                 sectionHeader!.identifier = "RSTokenItemSection"
             }
             
-            sectionHeader?.textField!.bezeled = false
-            sectionHeader?.textField!.stringValue = (tokenItemType as! RSTokenItemSection).sectionName
+            sectionHeader!.textField!.bezeled = false
+            sectionHeader!.textField!.stringValue = (tokenItemType as! RSTokenItemSection).sectionName
             
             return sectionHeader
         } else if tokenItemType is RSTokenItem {
@@ -284,13 +284,13 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
                     }
                 }
                 
-                tokenItem?.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
+                tokenItem!.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
                 tokenItem!.identifier = "RSTokenItem"
             }
             
-            tokenItem?.textField!.bezeled = false
-            tokenItem?.textField!.drawsBackground = false
-            tokenItem?.textField!.stringValue = (tokenItemType as! RSTokenItem).tokenTitle
+            tokenItem!.textField!.bezeled = false
+            tokenItem!.textField!.drawsBackground = false
+            tokenItem!.textField!.stringValue = (tokenItemType as! RSTokenItem).tokenTitle
             
             return tokenItem
         }

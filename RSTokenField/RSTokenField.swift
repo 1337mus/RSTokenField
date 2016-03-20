@@ -23,43 +23,47 @@ class RSTokenField: NSTextField {
     private var textSelected: Bool = false
     private var textSelectedAll: Bool = false
     
-    private var _tokenArray: [RSTokenItem]? = nil
+    private var _tokenArray: [RSTokenItemType]? = nil
     
-    var tokenArray: [RSTokenItem]!  {
+    var tokenArray: [RSTokenItemType]!  {
         get {
-            return self._tokenArray ?? [RSTokenItem]()
+            return self._tokenArray ?? [RSTokenItemType]()
         }
         
         set {
-            if let _ = self._tokenArray {
-                if (self._tokenArray! != newValue) {
+            if newValue != nil {
                     let appendedAttributeString = NSMutableAttributedString()
                     
                     let whiteSpace = NSMutableAttributedString(string: " ")
                     
                     for token in newValue.reverse() {
-                        var topLevelObjects: NSArray?
-                        NSBundle.mainBundle().loadNibNamed("RSTokenView", owner:self, topLevelObjects:&topLevelObjects)
-                        
-                        var view: RSTokenView!
-                        
-                        for o in topLevelObjects! {
-                            if o is RSTokenView {
-                                view = o as! RSTokenView
-                                view!.tokenItem = token
+                        if let t = token as? RSTokenItem {
+                            var topLevelObjects: NSArray?
+                            NSBundle.mainBundle().loadNibNamed("RSTokenView", owner:self, topLevelObjects:&topLevelObjects)
+                            
+                            var view: RSTokenView!
+                            
+                            for o in topLevelObjects! {
+                                if o is RSTokenView {
+                                    view = o as! RSTokenView
+                                    view!.tokenItem = t
+                                }
                             }
+                            
+                            let attachment = RSTextAttachment.init(withTokenView: view)
+                            
+                            let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
+                            attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
+                            attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
+                            
+                            appendedAttributeString.appendAttributedString(whiteSpace)
+                            appendedAttributeString.appendAttributedString(attributeString)
+                            appendedAttributeString.appendAttributedString(whiteSpace)
+                            
+                        } else if let t = token as? RSTokenItemSection {
+                            let sectionName = NSAttributedString.init(string: t.sectionName, attributes: [NSFontAttributeName : NSFont.systemFontOfSize(12)])
+                            appendedAttributeString.appendAttributedString(sectionName)
                         }
-                        
-                        let attachment = RSTextAttachment.init(withTokenView: view)
-                        
-                        let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
-                        attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
-                        attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
-                        
-                        appendedAttributeString.appendAttributedString(whiteSpace)
-                        appendedAttributeString.appendAttributedString(attributeString)
-                        
-                        appendedAttributeString.appendAttributedString(whiteSpace)
                     }
                     
                     self.attributedStringValue = appendedAttributeString
@@ -71,7 +75,6 @@ class RSTokenField: NSTextField {
                     if let textStorage = self.fieldEditor!.textStorage {
                         textStorage.setAttributedString(appendedAttributeString)
                     }
-                }
             }
             
             self._tokenArray = newValue
@@ -80,11 +83,11 @@ class RSTokenField: NSTextField {
     
     override var objectValue: AnyObject? {
         set {
-            self.tokenArray = newValue as? [RSTokenItem]
+            self.tokenArray = newValue as? [RSTokenItemType]
         }
         
         get {
-            return self.tokenArray
+            return self.tokenArray as? AnyObject
         }
     }
     
@@ -92,6 +95,9 @@ class RSTokenField: NSTextField {
     
     func replaceToken(withType type: String, tokenTitle title: String, atIndex index: Int) {
         let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
+        guard let fieldEditor = self.fieldEditor, let textStorage = fieldEditor.textStorage else {
+            return
+        }
         
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let val = value, let v = val as? RSTextAttachment {
@@ -108,7 +114,15 @@ class RSTokenField: NSTextField {
                     v.tokenView.selected = selected
                     v.tokenView.typeSelected = typeSelected
                     
-                    self.tokenArray[index/3] = v.tokenView.tokenItem
+                    var arrayIndex = index/3
+                    if arrayIndex == textStorage.length {
+                        arrayIndex--
+                    }
+                    
+                    if arrayIndex < 0 {
+                        arrayIndex = 0
+                    }
+                    self.tokenArray[arrayIndex] = v.tokenView.tokenItem
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
                     mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
@@ -118,10 +132,7 @@ class RSTokenField: NSTextField {
         }
         
         self.attributedStringValue = mutableAttrString
-        
-        if let fieldEditor = self.fieldEditor, let textStorage = fieldEditor.textStorage {
-            textStorage.setAttributedString(mutableAttrString)
-        }
+        textStorage.setAttributedString(mutableAttrString)
     }
     
     func setToken(typeOnly type: Bool, selected: Bool, atIndex index: Int) {
@@ -231,78 +242,86 @@ extension RSTokenField: NSTextViewDelegate {
                 return
             }
             
-            var charIndex = 0
-            var startIndex = 0
-            var endIndex = 0
-            
-            // We are going right here
-            if oldRange.location < newRange.location || NSMaxRange(newRange) > NSMaxRange(oldRange) {
-                charIndex = newRange.location + oldRange.length
-                startIndex = newRange.location
-                endIndex = newRange.location + newRange.length
-            } else {
-                //Left
-                charIndex = newRange.location
-                startIndex = newRange.location
-                endIndex = newRange.location + newRange.length
-            }
-            
-            var selectedRange = NSMakeRange(0, 0)
-            var hideCaret = false
-            
             //Close completion handler window
             fieldEditor.abandonCompletion()
+
+            var selectedRange = newRange
             
-            for var i = startIndex; i <= endIndex; i++ {
-                self.textSelected = true
-                hideCaret = true
-                
-                if textStorage.tokenStringAtIndex(i) != nil {
-                    self.setToken(true, atIndex: i)
-                    if newRange.location < oldRange.location {
-                        selectedRange = NSMakeRange(i - 1, 0)
-                        i++
-                    } else {
-                        selectedRange = NSMakeRange(i + 2, 0)
-                    }
+            // We are going right here
+            if NSMaxRange(newRange) > NSMaxRange(oldRange) {
+                for var i = newRange.location; i < NSMaxRange(newRange); i++ {
+                    self.textSelected = true
                     
-                } else {
-                    let string = textStorage.string as NSString
-                    if i >= string.length { continue }
-                    let unichar = string.characterAtIndex(i)
-                    let unicharString = Character(UnicodeScalar(unichar))
-                    if unicharString == " " && ((i > 0 && textStorage.tokenStringAtIndex(i - 1) != nil) || (i < textStorage.length && textStorage.tokenStringAtIndex(i + 1) != nil)) {
-                        // These are whitespaces surrounding tokens, no need to do anything here
-                        if newRange.location < oldRange.location {
-                            self.setToken(true, atIndex: i - 1)
-                            selectedRange = NSMakeRange(i - 2, 0)
-                            i++
-                        }
-                        continue
+                    if textStorage.tokenStringAtIndex(i) != nil {
+                        self.setToken(true, atIndex: i, force: newRange.length > 1)
+                        selectedRange = NSMakeRange(i + 2 < textStorage.length ? i + 2 : textStorage.length, 0)
+                        
                     } else {
-                        var area = NSMakeRange(i, 1)
-                        
-                        if newRange.location < oldRange.location {
-                            selectedRange = NSMakeRange(i, 0)
-                            area = NSMakeRange(i, 1)
-                            if newRange.length != textStorage.length {
-                                i++
-                            } else {
-                                selectedRange = NSMakeRange(i - 1, 0)
-                                area = NSMakeRange(i - 1, 2)
-                            }
-                        } else {
+                        let string = textStorage.string as NSString
+                        if i >= string.length { continue }
+                        let unichar = string.characterAtIndex(i)
+                        let unicharString = Character(UnicodeScalar(unichar))
+                        if unicharString == " " && ((i > 0 && textStorage.tokenStringAtIndex(i - 1) != nil) || (i < textStorage.length && textStorage.tokenStringAtIndex(i + 1) != nil)) {
+                            // These are whitespaces surrounding tokens, no need to do anything here
+                            self.setToken(true, atIndex: i + 1, force: newRange.length > 1)
+                            selectedRange = NSMakeRange(i + 3 < textStorage.length ? i + 3 : textStorage.length, 0)
+                            continue
+                        } else if i < NSMaxRange(newRange) {
+                            let area = NSMakeRange(i, 1)
+                            var disColored = false
                             selectedRange = NSMakeRange(i + 1, 0)
-                            area = NSMakeRange(i, 1)
+                            
+                            if let c = textStorage.attribute(NSBackgroundColorAttributeName, atIndex: area.location, effectiveRange: nil), color = c as? NSColor where newRange.length != textStorage.length {
+                                if color == NSColor.controlHighlightColor() {
+                                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                                    disColored = true
+                                }
+                            }
+                            if !disColored {
+                                textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                            }
                         }
-                        
-                        textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-                        textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
-                        
- 
                     }
                 }
+            } else {
+                //Left
+                for var i = oldRange.location - 1; i >= newRange.location; i-- {
+                    self.textSelected = true
+                    
+                    if textStorage.tokenStringAtIndex(i) != nil {
+                        self.setToken(true, atIndex: i, force: newRange.length > 1)
+                        selectedRange = NSMakeRange(i > 1 ? i - 1 : 0, 0)
+                    } else {
+                        let string = textStorage.string as NSString
+                        if i >= string.length { continue }
+                        let unichar = string.characterAtIndex(i)
+                        let unicharString = Character(UnicodeScalar(unichar))
+                        if unicharString == " " && ((i > 0 && (textStorage.tokenStringAtIndex(i - 1) != nil) || textStorage.tokenStringAtIndex(i + 1) != nil )) {
+                            // These are whitespaces surrounding tokens, no need to do anything here
+                            self.setToken(true, atIndex: i - 1, force: newRange.length > 1)
+                            selectedRange = NSMakeRange(i > 2 ? i - 2 : 0, 0)
+                        } else {
+                            let area = NSMakeRange(i, 1)
+                            var disColored = false
+                            selectedRange = NSMakeRange(i, 0)
+                            
+                            if let c = textStorage.attribute(NSBackgroundColorAttributeName, atIndex: area.location, effectiveRange: nil), color = c as? NSColor where newRange.length != textStorage.length {
+                                if color == NSColor.controlHighlightColor() {
+                                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                                    disColored = true
+                                }
+                            }
+                            if !disColored {
+                                textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                            }
+                            
+                        }
+                    }
+                }
+                
             }
+            
+            
             
             // Handle full text Selection
             if (newRange.location == 0) && newRange.length == textStorage.length && newRange.length > 0 {
@@ -388,17 +407,9 @@ extension RSTokenField: NSTextViewDelegate {
                 fieldEditor.lastSelectedTokenPosition.direction = .Right
             }
             
-            
-            if hideCaret {
-                fieldEditor.insertionPointColor = NSColor.whiteColor()
-                fieldEditor.lastSelectedTokenPosition.newRange = selectedRange
-                fieldEditor.setSelectedRange(selectedRange)
-            } else {
-                
-                fieldEditor.lastSelectedTokenPosition.newRange = newRange
-                fieldEditor.insertionPointColor = NSColor.blackColor()
-            }
-            
+            fieldEditor.insertionPointColor = NSColor.whiteColor()
+            fieldEditor.lastSelectedTokenPosition.newRange = selectedRange
+            fieldEditor.setSelectedRange(selectedRange)
             //TODO: rename this flag to something meaningful
             fieldEditor.mouseWasDragged = true
             self.textSelectedAll = false
@@ -414,7 +425,7 @@ extension RSTokenField {
         return true
     }
     
-    func textView (textView: RSTokenTextView, didChangeTokens tokens: Array<RSTokenItem>) {
+    func textView (textView: RSTokenTextView, didChangeTokens tokens: Array<RSTokenItemType>) {
         self.tokenArray = tokens
     }
     
