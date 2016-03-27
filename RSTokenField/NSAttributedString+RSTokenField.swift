@@ -50,4 +50,22 @@ extension NSAttributedString {
         }
         return false
     }
+    
+    func isTextButNotWhiteSpace(index: Int) -> Bool {
+        let string = self.string as NSString
+        if index >= string.length { return false }
+        let unichar = string.characterAtIndex(index)
+        let unicharString = Character(UnicodeScalar(unichar))
+        
+        return unicharString != " " && self.tokenStringAtIndex(index) == nil
+    }
+    
+    func isWhiteSpace(index: Int) -> Bool {
+        let string = self.string as NSString
+        if index >= string.length { return false }
+        let unichar = string.characterAtIndex(index)
+        let unicharString = Character(UnicodeScalar(unichar))
+        
+        return unicharString == " "
+    }
 }

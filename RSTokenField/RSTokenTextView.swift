@@ -26,6 +26,7 @@ class RSTokenTextView: NSTextView {
     
     var lastSelectedTokenPosition = RSTokenPosition()
     var mouseWasDragged: Bool = false
+
     
     //MARK: Private Properties
     private var lastEnteredStem: String = ""
@@ -33,7 +34,19 @@ class RSTokenTextView: NSTextView {
     //MARK: Overrides
     override func resignFirstResponder() -> Bool {
         self.tokenizeRemainingText()
-        return super.resignFirstResponder()
+        return false
+    }
+    
+    override func completionsForPartialWordRange(charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String]? {
+        return nil
+    }
+    
+    override func writeSelectionToPasteboard(pboard: NSPasteboard, type: String) -> Bool {
+        return true
+    }
+    
+    override func readSelectionFromPasteboard(pboard: NSPasteboard) -> Bool {
+        return true
     }
     
     //MARK: Text Insertion Methods
@@ -49,11 +62,22 @@ class RSTokenTextView: NSTextView {
             delegate.textView(self, didChangeTokens: self.tokenArray())
             self.setSelectedRange(NSMakeRange(insertionLocation + 2, 0))
         }
+        
     }
     
     override func insertText(aString: AnyObject, replacementRange: NSRange) {
         guard let textStorage = self.textStorage else { return }
-        self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
+        // Erase all the selection and reset the attributes for textStorage and typing
+        if self.mouseWasDragged {
+            self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
+            let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+            if deleteRange.length < textStorage.length {
+                textStorage.replaceCharactersInRange(deleteRange, withString: "")
+            }
+            self.lastSelectedTokenPosition = RSTokenPosition()
+            self.mouseWasDragged = false
+        }
         
         let insertionIndex = self.selectedRange().location
         // Delete Tokens that are selected and insert text in their position
@@ -96,7 +120,7 @@ class RSTokenTextView: NSTextView {
     override func doCommandBySelector(aSelector: Selector) {
         let completionController = RSTokenCompletionWindowController.sharedInstance
         guard let textStorage = self.textStorage else { return }
-        
+
         if aSelector == "insertNewline:" {
             return
         } else if aSelector == "moveToLeftEndOfLine:" {
@@ -123,13 +147,7 @@ class RSTokenTextView: NSTextView {
             if self.mouseWasDragged {
                 self.mouseWasDragged = false
                 
-                var deleteRange = NSMakeRange(0, 0)
-                
-                if self.lastSelectedTokenPosition.direction == .Right {
-                    deleteRange = NSMakeRange(self.lastSelectedTokenPosition.oldRange.location, self.lastSelectedTokenPosition.newRange.location + self.lastSelectedTokenPosition.newRange.length - self.lastSelectedTokenPosition.oldRange.location)
-                } else {
-                    deleteRange = NSMakeRange(self.lastSelectedTokenPosition.newRange.location, self.lastSelectedTokenPosition.oldRange.location + self.lastSelectedTokenPosition.oldRange.length - self.lastSelectedTokenPosition.newRange.location)
-                }
+                let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
                 
                 NSLog("Delete Range Location is %d and Length %d", deleteRange.location, abs(deleteRange.length))
                 
@@ -212,6 +230,7 @@ class RSTokenTextView: NSTextView {
                 return
             }
             
+            self.lastSelectedTokenPosition = RSTokenPosition()
             self.abandonCompletion()
             let selectedRange = self.selectedRange()
             if selectedRange.location >= 0 && (selectedRange.location + selectedRange.length) <= self.textStorage?.length {
@@ -227,6 +246,12 @@ class RSTokenTextView: NSTextView {
                     }
                     return
                 } else if (selectedIndex >= 0 && (self.textStorage?.tokenStringAtIndex(selectedIndex)) != nil) {
+                    if !self.lastSelectedTokenPosition.selected {
+                        self.lastSelectedTokenPosition.selected = true
+                        self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+                        self.lastSelectedTokenPosition.direction = .Left
+                    }
+                    
                     (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedIndex)
                     self.setSelectedRange(NSMakeRange(selectedIndex - 1, 0))
                     self.insertionPointColor = NSColor.whiteColor()
@@ -262,6 +287,7 @@ class RSTokenTextView: NSTextView {
                 
                 return
             } else {
+                self.lastSelectedTokenPosition = RSTokenPosition()
                 self.abandonCompletion()
                 
                 let selectedRange = self.selectedRange()
@@ -278,6 +304,12 @@ class RSTokenTextView: NSTextView {
                         }
                         return
                     } else if (textStorage.tokenStringAtIndex(selectedIndex) != nil) {
+                        if !self.lastSelectedTokenPosition.selected {
+                            self.lastSelectedTokenPosition.selected = true
+                            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+                            self.lastSelectedTokenPosition.direction = .Right
+                        }
+                        
                         (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedIndex)
                         self.setSelectedRange(NSMakeRange(selectedIndex + 2, 0))
                         self.insertionPointColor = NSColor.whiteColor()
@@ -294,7 +326,8 @@ class RSTokenTextView: NSTextView {
     
 }
 
-//MARK: Helper Methods
+
+//MARK: TOKEN HELPER METHODS
 extension RSTokenTextView {
     
     //MARK: Token Methods
@@ -418,38 +451,367 @@ extension RSTokenTextView {
             self.setSelectedRange(NSMakeRange(min((self.textStorage?.length)!,attributesRange.location + attributesRange.length - 1), 0))
             completionHandler.tearDownWindow()
         }
+        
     }
-
+    
+    
 }
 
-
-//MARK: handle Mouse clicks
+//MARK: KEYBOARD CONTROL OVERRIDES
 extension RSTokenTextView {
-    override func mouseDown(event: NSEvent) {
+    override func selectAll(sender: AnyObject?) {
+        super.selectAll(sender)
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        self.setTokensStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(0, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = self.selectedRange()
+        self.lastSelectedTokenPosition.direction = .Right
+        
+        self.mouseWasDragged = true
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+    }
+    
+    override func moveWordLeft(sender: AnyObject?) {
+        super.moveWordLeft(sender)
         guard let textStorage = self.textStorage else { return }
-        guard let layoutManager = self.layoutManager else { return }
-        guard let textContainer = self.textContainer else { return }
+        
+        self.insertionPointColor = NSColor.blackColor()
+        var index = self.selectedRange().location
+        
+        if textStorage.tokenStringAtIndex(index) != nil {
+            index--
+        }
+        
+        //If there is a selection present, we look at the following flags to determine the start and end Index
+        if self.mouseWasDragged && self.lastSelectedTokenPosition.selected {
+            let union = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+            self.setTokensStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
+            if self.lastSelectedTokenPosition.direction == .Right {
+                index = union.location
+            }
+        } else {
+            self.setTokensStatus(false, startIndex: index, endIndex: textStorage.length)
+        }
+        
+        self.setSelectedRange(NSMakeRange(index, 0))
+        self.mouseWasDragged = false
+        self.lastSelectedTokenPosition = RSTokenPosition()
+    }
+    
+    override func moveWordRight(sender: AnyObject?) {
+        super.moveWordRight(sender)
+        guard let textStorage = self.textStorage else { return }
+        
+        self.insertionPointColor = NSColor.blackColor()
+        var index = self.selectedRange().location
+        
+        if textStorage.tokenStringAtIndex(index - 1) != nil {
+            index++
+        }
+        
+        //If there is a selection present, we look at the following flags to determine the start and end Index
+        if self.mouseWasDragged && self.lastSelectedTokenPosition.selected {
+            let union = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+            self.setTokensStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
+            if self.lastSelectedTokenPosition.direction == .Left {
+                index = NSMaxRange(union)
+            }
+        } else {
+            self.setTokensStatus(false, startIndex: 0, endIndex: index)
+        }
+        
+        self.setSelectedRange(NSMakeRange(index, 0))
+        self.mouseWasDragged = false
+        self.lastSelectedTokenPosition = RSTokenPosition()
+    }
+    
+    override func moveToLeftEndOfLineAndModifySelection(sender: AnyObject?) {
+        super.moveToLeftEndOfLineAndModifySelection(sender)
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        self.setTokensStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(0, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = self.selectedRange()
+        self.lastSelectedTokenPosition.direction = .Left
+        
+        self.mouseWasDragged = true
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+    }
+    
+    override func moveToRightEndOfLineAndModifySelection(sender: AnyObject?) {
+        super.moveToRightEndOfLineAndModifySelection(sender)
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        self.setTokensStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = self.selectedRange()
+        self.lastSelectedTokenPosition.direction = .Right
+        
+        self.mouseWasDragged = true
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+    }
+    
+    override func moveWordLeftAndModifySelection(sender: AnyObject?) {
+        super.moveWordLeftAndModifySelection(sender)
+        guard let textStorage = self.textStorage else { return }
+        
+        self.insertionPointColor = NSColor.whiteColor()
+        var index = self.selectedRange().location
+        
+        if textStorage.tokenStringAtIndex(index) != nil {
+            let area = NSMakeRange(index, 2)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+            index--
+        }
+        
+        let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location <= index ? false : true
+        self.setTokensStatus(selected, startIndex: index, endIndex: index + self.selectedRange().length)
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(NSMaxRange(self.selectedRange()), 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(index, 0)
+        self.lastSelectedTokenPosition.direction = .Left
+        
+        self.setSelectedRange(NSMakeRange(index, 0))
+        self.mouseWasDragged = true
+    }
+    
+    override func moveWordRightAndModifySelection(sender: AnyObject?) {
+        super.moveWordRightAndModifySelection(sender)
+        guard let textStorage = self.textStorage else { return }
+        
+        var index = NSMaxRange(self.selectedRange())
+        if index - 1 < 0 { return }
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        if textStorage.tokenStringAtIndex(index - 1) != nil {
+            let area = NSMakeRange(index - 2, 3)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+            index++
+        }
+        
+        let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location >= index ? false : true
+        self.setTokensStatus(selected, startIndex: self.selectedRange().location, endIndex: index)
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(index, 0)
+        self.lastSelectedTokenPosition.direction = .Right
+        
+        self.setSelectedRange(NSMakeRange(index, 0))
+        self.mouseWasDragged = true
+        
+    }
+    
+    override func moveLeftAndModifySelection(sender: AnyObject?) {
+        guard let textStorage = self.textStorage else { return }
+        // Do not want to do anything if the range is at the beginning
+        if self.selectedRange().location == 0 { return }
+        
+        self.insertionPointColor = NSColor.whiteColor()
+        //Force the selection since we are not calling super here, Move to left by once cursor point
+        let index = self.selectedRange().location - 1
+        var newLocation = index
+        
+        if textStorage.isWhiteSpace(index) && textStorage.tokenStringAtIndex(index - 1) != nil {
+            if textStorage.tokenStringAtIndex(index - 1) != nil {
+                let force = self.lastSelectedTokenPosition.direction == .Right ? (self.mouseWasDragged ? false : true) : false
+                (self.delegate as! RSTokenField).setToken(true, atIndex: index - 1, force: force)
+                self.setSelectedRange(NSMakeRange(index + 1, 0))
+                
+                newLocation = index - 2
+                
+                if force {
+                    //This means we need to "select" the next token or character to the right
+                    self.setSelectedRange(NSMakeRange(newLocation, 0))
+                    self.moveLeftAndModifySelection(self)
+                    return
+                }
+            }
+        } else {
+            let area = NSMakeRange(index, 1)
+            var disColored = false
+            
+            if let c = textStorage.attribute(NSBackgroundColorAttributeName, atIndex: area.location, effectiveRange: nil), color = c as? NSColor {
+                if color == NSColor.controlHighlightColor() {
+                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                    disColored = true
+                }
+            }
+            if !disColored {
+                textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+            }
+        }
+    
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(newLocation, 0)
+        self.lastSelectedTokenPosition.direction = .Left
+        
+        self.setSelectedRange(NSMakeRange(newLocation, 0))
+        self.mouseWasDragged = true
+    }
+    
+    override func moveRightAndModifySelection(sender: AnyObject?) {
+        guard let textStorage = self.textStorage else { return }
+        // Do not want to do anything if the range is at the beginning
+        if self.selectedRange().location == textStorage.length { return }
+        
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        //Force the selection since we are not calling super here, Move to left by once cursor point
+        let index = self.selectedRange().location
+        var newLocation = index + 1
+        
+        if textStorage.isWhiteSpace(index) && textStorage.tokenStringAtIndex(index + 1) != nil {
+            if textStorage.tokenStringAtIndex(index + 1) != nil {
+                let force = self.lastSelectedTokenPosition.direction == .Left ? (self.mouseWasDragged ? false : true) : false
+                (self.delegate as! RSTokenField).setToken(true, atIndex: index + 1, force: force)
+                self.setSelectedRange(NSMakeRange(index, 0))
+                newLocation = index + 3
+                
+                if force {
+                    //This means we need to "select" the next token or character to the right
+                    self.setSelectedRange(NSMakeRange(newLocation, 0))
+                    self.moveRightAndModifySelection(self)
+                    return
+                }
+                
+            }
+        } else {
+            let area = NSMakeRange(index, 1)
+            var disColored = false
+            
+            if let c = textStorage.attribute(NSBackgroundColorAttributeName, atIndex: area.location, effectiveRange: nil), color = c as? NSColor {
+                if color == NSColor.controlHighlightColor() {
+                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                    disColored = true
+                }
+            }
+            if !disColored {
+                textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+            }
+        }
+        
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(newLocation, 0)
+        self.lastSelectedTokenPosition.direction = .Right
+        
+        self.setSelectedRange(NSMakeRange(newLocation, 0))
+        self.mouseWasDragged = true
+    }
+}
+
+//MARK: MOUSE EVENTS
+extension RSTokenTextView {
+    // Use Mouse Loop Tracking Approach
+    override func mouseDown(theEvent: NSEvent) {
+        guard let window = self.window else { return }
+        
+        var dragActive = self.mouseDowned(theEvent)
+        
+        while dragActive {
+            if let event = window.nextEventMatchingMask(Int(NSEventMask.LeftMouseDraggedMask.union(.LeftMouseUpMask).rawValue), untilDate: NSDate.distantFuture(), inMode: NSEventTrackingRunLoopMode, dequeue: true) {
+                switch event.type {
+                case .LeftMouseDragged:
+                    self.mouseDrag(event)
+                    break
+                case .LeftMouseUp:
+                    dragActive = false
+                    self.mouseUpp(event)
+                    break
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
+    private func handleDoubleClickOnText() {
+        self.insertionPointColor = NSColor.whiteColor()
+        self.setTokensStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(NSMaxRange(self.selectedRange()), 0)
+        self.lastSelectedTokenPosition.direction = .Right
+        
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+        self.mouseWasDragged = true
+    }
+    
+    func mouseDowned(event: NSEvent) -> Bool {
+        guard let textStorage = self.textStorage else { return false }
         
         if self.mouseWasDragged {
+            self.insertionPointColor = NSColor.whiteColor()
+            
             (self.delegate as! RSTokenField!).setToken(typeOnly: false, selected: true, atIndex: NSNotFound)
             let area = NSMakeRange(0, textStorage.length)
             textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
             
+            self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
         }
         
+        self.lastSelectedTokenPosition = RSTokenPosition()
+        
         if event.type == .LeftMouseDown {
-            let pos = self.convertPoint(event.locationInWindow, fromView: nil)
+            guard let eventMetaData = self.getMetaDataForMouseEvent(event) else { return false }
             
-            var fraction: CGFloat = 0
-            let glyphIndex = layoutManager.glyphIndexForPoint(pos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
-            let bounds = layoutManager.boundingRectForGlyphRange(NSMakeRange(glyphIndex, 1), inTextContainer: textContainer)
+            let charIndex = eventMetaData["charIndex"] as! Int
+            let pos = (eventMetaData["position"] as! NSValue).pointValue
+            let bounds = (eventMetaData["bounds"] as! NSValue).rectValue
             
-            if event.clickCount == 2 {
+            if event.clickCount == 3 {
+                self.selectAll(self)
+                return false
+            } else if event.clickCount == 2 {
                 // Handle double click
-                if textStorage.tokenStringAtIndex(glyphIndex) != nil {
+                if textStorage.tokenStringAtIndex(charIndex) != nil {
                     var stem = ""
-                    var curRange = NSMakeRange(glyphIndex, 0)
+                    var curRange = NSMakeRange(charIndex, 0)
                     while curRange.location != NSNotFound {
                         let attribute = textStorage.attribute(NSAttachmentAttributeName, atIndex: curRange.location, effectiveRange: &curRange)
                         if attribute is RSTextAttachment {
@@ -459,12 +821,17 @@ extension RSTokenTextView {
                         curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
                     }
                     
-                    self.textStorage?.replaceCharactersInRange(NSMakeRange(glyphIndex - 1, 3), withString: stem)
+                    self.textStorage?.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
                     self.insertionPointColor = NSColor.blackColor()
+                } else {
+                    super.mouseDown(event)
+                    self.handleDoubleClickOnText()
+                    return false
                 }
             } else {
                 if NSPointInRect(pos, bounds) {
-                    let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
+                    NSLog("Mouse Down position is %d", charIndex)
+                    
                     if let attribute = (textStorage.attribute(NSAttachmentAttributeName, atIndex: charIndex, effectiveRange: nil)) {
                         if attribute is RSTextAttachment {
                             let buttonRect = ((attribute as! RSTextAttachment).tokenView?.type.frame)!
@@ -501,122 +868,179 @@ extension RSTokenTextView {
                         }
                     }
                 } else {
-                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: glyphIndex)
-                    self.setSelectedRange(NSMakeRange(glyphIndex + 1, 0))
+                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex)
+                    self.setSelectedRange(NSMakeRange(charIndex + 1, 0))
                     self.insertionPointColor = NSColor.blackColor()
                 }
             }
         }
+        
+        return true
     }
     
-    override func mouseDragged(theEvent: NSEvent) {
+    func mouseDrag(theEvent: NSEvent) {
         self.mouseWasDragged = true
         
-        guard let textStorage = self.textStorage else { return }
-        guard let layoutManager = self.layoutManager else { return }
-        guard let textContainer = self.textContainer else { return }
+        guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return }
         
-        let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
-        let appliedPos = CGPointMake(pos.x, self.frame.size.height/2)
+        let charIndex = eventMetaData["charIndex"] as! Int
+        let fraction = eventMetaData["fraction"] as! CGFloat
         
-        var fraction: CGFloat = 0
-        let glyphIndex = layoutManager.glyphIndexForPoint(appliedPos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
-        let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
-        let bounds = layoutManager.boundingRectForGlyphRange(NSMakeRange(glyphIndex, 1), inTextContainer: textContainer)
+        NSLog("Dragged position is %d and selectedRange is %d", charIndex, self.selectedRange().location)
         
-        if charIndex >= self.selectedRange().location {
-            fraction = 1 - fraction
-            self.lastSelectedTokenPosition.direction = .Right
-        } else if charIndex < self.selectedRange().location {
-            self.lastSelectedTokenPosition.direction = .Left
+        var finalIndex = charIndex
+        self.lastSelectedTokenPosition.direction = charIndex >= self.selectedRange().location ? .Right : .Left
+        
+        if textStorage?.tokenStringAtIndex(charIndex) != nil {
+            finalIndex = fraction < 0.5 ? charIndex : charIndex + 2
         }
         
-        if NSPointInRect(appliedPos, bounds) {
-            if fraction < 0.5 {
-                var area: NSRange = NSMakeRange(NSNotFound, NSNotFound)
-                if let attribute = (self.textStorage?.attribute(NSAttachmentAttributeName, atIndex: charIndex, effectiveRange: &area)) {
-                    if attribute is RSTextAttachment {
-                        let range = self.selectedRange()
-                        (self.delegate as! RSTokenField).setToken(true, atIndex: charIndex, force: true)
-                        self.setSelectedRange(range)
-                    }
-                } else {
-                    let string = textStorage.string as NSString
-                    let unichar = string.characterAtIndex(charIndex)
-                    let unicharString = Character(UnicodeScalar(unichar))
-                    if unicharString == " " && ((charIndex > 0 && textStorage.tokenStringAtIndex(charIndex - 1) != nil) || (charIndex < textStorage.length && textStorage.tokenStringAtIndex(charIndex + 1) != nil)) {
-                        //Nothing to do here
-                    } else {
-                        let area = NSMakeRange(charIndex, 1)
-                        textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
-                    }
+        NSLog("fraction is %f", fraction)
+        
+        self.mouseDragged(toIndex: finalIndex, direction: self.lastSelectedTokenPosition.direction)
+        
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = self.selectedRange
+        }
+        
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(finalIndex, 0)
+    }
+    
+    func mouseDragged(toIndex index: Int, direction: RSTokenPosition.Direction) {
+        guard let textStorage = self.textStorage else { return }
+        
+        var startIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
+        var endIndex = index
+        
+        if direction == .Left {
+            endIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
+            startIndex = index
+        }
+        
+        if startIndex == endIndex {
+            return
+        } else if startIndex > endIndex {
+            //Unselect all the selected tokens
+            self.setTokensStatus(false, startIndex: endIndex, endIndex: startIndex)
+            return
+        } else {
+            switch direction {
+            case .Left:
+                if self.selectedRange().location < textStorage.length {
+                    //Unselect everything from endIndex till TextStorage.Length
+                    self.setTokensStatus(false, startIndex: self.selectedRange().location, endIndex: textStorage.length)
                 }
-                
-                if !self.lastSelectedTokenPosition.selected {
-                    self.lastSelectedTokenPosition.selected = true
-                    self.lastSelectedTokenPosition.oldRange = self.selectedRange
-                    self.lastSelectedTokenPosition.newRange = NSMakeRange(charIndex, 0)
+                break
+            case .Right:
+                if self.selectedRange().location > 0 {
+                    //Unselect everything from endIndex till TextStorage.Length
+                    self.setTokensStatus(false, startIndex: 0, endIndex: self.selectedRange().location - 1)
                 }
-                
-            } else {
-                var area: NSRange = NSMakeRange(NSNotFound, NSNotFound)
-                if let attribute = (textStorage.attribute(NSAttachmentAttributeName, atIndex: charIndex, effectiveRange: &area)) {
-                    if attribute is RSTextAttachment {
-                        let range = self.selectedRange()
-                        (self.delegate as! RSTokenField).setToken(false, atIndex: charIndex, force: true)
-                        self.setSelectedRange(range)
-                    }
-                } else {
-                    let area = NSMakeRange(charIndex, 1)
-                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-                }
-                
-                self.lastSelectedTokenPosition.newRange = NSMakeRange(charIndex, 0)
+                break
+            default:
+                break
             }
+            
+            self.setTokensStatus(true, startIndex: startIndex, endIndex: endIndex)
         }
     }
     
-    override func mouseUp(theEvent: NSEvent) {
+    
+    func mouseUpp(theEvent: NSEvent) {
         guard let textStorage = self.textStorage else { return }
-        guard let layoutManager = self.layoutManager else { return }
-        guard let textContainer = self.textContainer else { return }
         
-        let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
-        let appliedPos = CGPointMake(pos.x, self.frame.size.height/2)
+        let index = self.lastSelectedTokenPosition.newRange.location
+        var selectedRange = NSMakeRange(index, 0)
+        var insertionPointcolor = NSColor.whiteColor()
         
-        var fraction: CGFloat = 0
-        let glyphIndex = layoutManager.glyphIndexForPoint(appliedPos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
+        //HACK:Everything below here is for an ugly hack to set the text selection till the end of the textStorage length
+        guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return }
         
-        let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
-        var selectedRange = NSMakeRange(0, 0)
+        let charIndex = eventMetaData["charIndex"] as! Int
+        let fraction = eventMetaData["fraction"] as! CGFloat
+        //Until Here
         
-        if mouseWasDragged {
-            
+        if self.mouseWasDragged {
             if self.lastSelectedTokenPosition.direction == .Right {
-                if (textStorage.tokenStringAtIndex(charIndex) != nil) {
-                    if charIndex < textStorage.length - 1 {
-                        selectedRange = NSMakeRange(charIndex + 2, 0)
+                if (textStorage.tokenStringAtIndex(index) != nil) && fraction > 0.5 {
+                    if index < textStorage.length - 1 {
+                        selectedRange = NSMakeRange(index + 2, 0)
                     } else {
                         selectedRange = NSMakeRange(textStorage.length, 0)
                     }
-                } else {
-                    selectedRange = NSMakeRange(charIndex, 0)
+                } else if (textStorage.tokenStringAtIndex(index) != nil) && fraction < 0.5{
+                    //Even though the mouse ended up being on a token the fraction is < 0.5 hence we do not set it as selected yet
+                    selectedRange = NSMakeRange(index - 1, 0)
+                } else if fraction == 1 && charIndex == textStorage.length - 1 {
+                    //HACK:This combined with the if conidtion in the mouseDrag method for direction == Right
+                    //is an ugly hack to keep the selection till the end of the text Storage length, Feel dirty doing this
+                    let area = NSMakeRange(charIndex, 1)
+                    textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                    selectedRange = NSMakeRange(textStorage.length, 0)
                 }
             } else {
-                if (textStorage.tokenStringAtIndex(charIndex) != nil) {
-                    if charIndex > 0 {
-                        selectedRange = NSMakeRange(charIndex - 1, 0)
+                if (textStorage.tokenStringAtIndex(index) != nil) && fraction < 0.5 {
+                    if index > 0 {
+                        selectedRange = NSMakeRange(index - 1, 0)
                     } else {
                         selectedRange = NSMakeRange(0, 0)
                     }
-                } else {
-                    selectedRange = NSMakeRange(charIndex, 0)
+                } else if (textStorage.tokenStringAtIndex(index) != nil) && fraction > 0.5 {
+                    //Even though the mouse ended up being on a token the fraction is >d 0.5 hence we do not set it as selected yet
+                    selectedRange = NSMakeRange(index + 2, 0)
+                } else if fraction == 1 && charIndex == textStorage.length - 1 {
+                    //HACK:This combined with the if conidtion in the mouseDrag method for direction == Right
+                    //is an ugly hack to keep the selection till the end of the text Storage length, Feel dirty doing this
+                    let area = NSMakeRange(charIndex, 1)
+                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                    selectedRange = NSMakeRange(textStorage.length, 0)
+                    insertionPointcolor = NSColor.blackColor()
                 }
             }
             
             self.lastSelectedTokenPosition.newRange = selectedRange
-            self.insertionPointColor = NSColor.whiteColor()
+            self.insertionPointColor = insertionPointcolor
             self.setSelectedRange(selectedRange)
+        }
+    }
+
+}
+
+//MARK: HELPERS
+extension RSTokenTextView {
+    func getMetaDataForMouseEvent(theEvent: NSEvent) -> [String:AnyObject]? {
+        guard let layoutManager = self.layoutManager,textContainer = self.textContainer else { return nil }
+        
+        let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+        let appliedPos = CGPointMake(pos.x, self.frame.size.height/2)
+        
+        var fraction: CGFloat = 0
+        let glyphIndex = layoutManager.glyphIndexForPoint(appliedPos, inTextContainer: textContainer, fractionOfDistanceThroughGlyph: &fraction)
+        let bounds = layoutManager.boundingRectForGlyphRange(NSMakeRange(glyphIndex, 1), inTextContainer: textContainer)
+        let charIndex = layoutManager.characterIndexForGlyphAtIndex(glyphIndex)
+        
+        return ["charIndex" : charIndex, "fraction" : fraction, "bounds" : NSValue.init(rect: bounds), "position" : NSValue.init(point: pos)]
+    }
+    
+    func setTokensStatus(selected: Bool, startIndex from: Int, endIndex to: Int) {
+        guard let textStorage = self.textStorage else { return }
+        
+        for var i = from; i < to; i++ {
+            if textStorage.tokenStringAtIndex(i) != nil {
+                let range = self.selectedRange()
+                (self.delegate as! RSTokenField).setToken(selected, atIndex: i, force: true)
+                self.setSelectedRange(range)
+            } else if ((i < textStorage.length && textStorage.tokenStringAtIndex(i + 1) != nil) || (i > 0 && textStorage.tokenStringAtIndex(i - 1) != nil)) {
+                //Nothing to do here
+            } else {
+                let area = NSMakeRange(i, i < textStorage.length ? 1 : 0)
+                if selected {
+                    textStorage.addAttribute(NSBackgroundColorAttributeName, value: NSColor.controlHighlightColor(), range: area)
+                } else {
+                    textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+                }
+            }
         }
     }
 }
