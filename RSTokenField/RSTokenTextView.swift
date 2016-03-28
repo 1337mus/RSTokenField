@@ -72,9 +72,9 @@ class RSTokenTextView: NSTextView {
             self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
             textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-            if deleteRange.length < textStorage.length {
+          //  if deleteRange.length < textStorage.length {
                 textStorage.replaceCharactersInRange(deleteRange, withString: "")
-            }
+           // }
             self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
         }
@@ -847,6 +847,7 @@ extension RSTokenTextView {
                                 if let menu = (self.delegate as! RSTokenField).textView(self, menuForToken: ((attribute as! RSTextAttachment).tokenView?.title.stringValue)!, atIndex: charIndex) {
                                     let point = CGPointMake(bounds.origin.x + 2, buttonRect.height + 10)
                                     menu.popUpMenuPositioningItem(menu.itemAtIndex(0), atLocation: point, inView: self)
+                                    return false
                                 }
                             } else {
                                 // left click on token title

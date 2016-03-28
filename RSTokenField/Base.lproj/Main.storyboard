@@ -673,8 +673,11 @@
                         <rect key="frame" x="0.0" y="0.0" width="700" height="270"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
-                            <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RXB-o5-Cpm" customClass="RSTokenField" customModule="RSTokenField" customModuleProvider="target">
+                            <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="RXB-o5-Cpm" customClass="RSTokenField" customModule="RSTokenField" customModuleProvider="target">
                                 <rect key="frame" x="20" y="219" width="660" height="25"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="25" id="4u9-fa-kn7"/>
+                                </constraints>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" focusRingType="none" drawsBackground="YES" allowsEditingTextAttributes="YES" usesSingleLineMode="YES" id="EcQ-qX-MdZ" customClass="RSTokenFieldCell" customModule="RSTokenField" customModuleProvider="target">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -682,6 +685,11 @@
                                 </textFieldCell>
                             </textField>
                         </subviews>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="RXB-o5-Cpm" secondAttribute="trailing" constant="20" id="NKF-rl-vdt"/>
+                            <constraint firstItem="RXB-o5-Cpm" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="20" id="SDI-gh-VdG"/>
+                            <constraint firstItem="RXB-o5-Cpm" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" constant="26" id="TfJ-a4-URC"/>
+                        </constraints>
                     </view>
                     <connections>
                         <outlet property="tokenField" destination="RXB-o5-Cpm" id="QEl-yK-j2O"/>
