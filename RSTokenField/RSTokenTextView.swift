@@ -341,7 +341,7 @@ extension RSTokenTextView {
         for o in topLevelObjects! {
             if o is RSTokenView {
                 view = o as! RSTokenView
-                view!.tokenItem = RSTokenItem.init(type: "Title", title: aString)
+                view!.tokenItem = RSTokenItem.init(type: "Kind", title: aString)
                 view!.tokenItem.stem = self.lastEnteredStem
             }
         }
@@ -463,7 +463,7 @@ extension RSTokenTextView {
         super.selectAll(sender)
         self.insertionPointColor = NSColor.whiteColor()
         
-        self.setTokensStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
+        self.setTokenStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
         
         //Set the old range if its not already selected (Could be selected due to drag)
         if !self.lastSelectedTokenPosition.selected {
@@ -492,12 +492,12 @@ extension RSTokenTextView {
         //If there is a selection present, we look at the following flags to determine the start and end Index
         if self.mouseWasDragged && self.lastSelectedTokenPosition.selected {
             let union = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-            self.setTokensStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
+            self.setTokenStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
             if self.lastSelectedTokenPosition.direction == .Right {
                 index = union.location
             }
         } else {
-            self.setTokensStatus(false, startIndex: index, endIndex: textStorage.length)
+            self.setTokenStatus(false, startIndex: index, endIndex: textStorage.length)
         }
         
         self.setSelectedRange(NSMakeRange(index, 0))
@@ -519,12 +519,12 @@ extension RSTokenTextView {
         //If there is a selection present, we look at the following flags to determine the start and end Index
         if self.mouseWasDragged && self.lastSelectedTokenPosition.selected {
             let union = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-            self.setTokensStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
+            self.setTokenStatus(false, startIndex: union.location, endIndex: NSMaxRange(union))
             if self.lastSelectedTokenPosition.direction == .Left {
                 index = NSMaxRange(union)
             }
         } else {
-            self.setTokensStatus(false, startIndex: 0, endIndex: index)
+            self.setTokenStatus(false, startIndex: 0, endIndex: index)
         }
         
         self.setSelectedRange(NSMakeRange(index, 0))
@@ -536,7 +536,7 @@ extension RSTokenTextView {
         super.moveToLeftEndOfLineAndModifySelection(sender)
         self.insertionPointColor = NSColor.whiteColor()
         
-        self.setTokensStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
+        self.setTokenStatus(true, startIndex: 0, endIndex: NSMaxRange(self.selectedRange()))
         
         //Set the old range if its not already selected (Could be selected due to drag)
         if !self.lastSelectedTokenPosition.selected {
@@ -555,7 +555,7 @@ extension RSTokenTextView {
         super.moveToRightEndOfLineAndModifySelection(sender)
         self.insertionPointColor = NSColor.whiteColor()
         
-        self.setTokensStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
+        self.setTokenStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
         
         //Set the old range if its not already selected (Could be selected due to drag)
         if !self.lastSelectedTokenPosition.selected {
@@ -574,17 +574,29 @@ extension RSTokenTextView {
         super.moveWordLeftAndModifySelection(sender)
         guard let textStorage = self.textStorage else { return }
         
-        self.insertionPointColor = NSColor.whiteColor()
         var index = self.selectedRange().location
         
         if textStorage.tokenStringAtIndex(index) != nil {
             let area = NSMakeRange(index, 2)
             textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
             index--
+        } else if self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.direction == .None {
+            //NOTE: This is a special case Mouse Double Click text Selection handling
+            index = self.lastSelectedTokenPosition.oldRange.location
+            //Continuously update the new range (disregard the length, just like in drag)
+            self.lastSelectedTokenPosition.oldRange = self.lastSelectedTokenPosition.newRange
+            self.lastSelectedTokenPosition.newRange = NSMakeRange(index, 0)
+            self.lastSelectedTokenPosition.direction = .Left
+            
+            //Update the selected Range and modify the selection again by moving the work
+            self.setSelectedRange(NSMakeRange(index, 0))
+            self.moveWordLeftAndModifySelection(self)
+            
+            return
         }
         
-        let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location <= index ? false : true
-        self.setTokensStatus(selected, startIndex: index, endIndex: index + self.selectedRange().length)
+        let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location <= index && self.lastSelectedTokenPosition.direction != .None ? false : true
+        self.setTokenStatus(selected, startIndex: index, endIndex: index + self.selectedRange().length)
         //Set the old range if its not already selected (Could be selected due to drag)
         if !self.lastSelectedTokenPosition.selected {
             self.lastSelectedTokenPosition.selected = true
@@ -595,6 +607,10 @@ extension RSTokenTextView {
         self.lastSelectedTokenPosition.direction = .Left
         
         self.setSelectedRange(NSMakeRange(index, 0))
+        self.insertionPointColor = index != self.lastSelectedTokenPosition.oldRange.location ? NSColor.whiteColor() : NSColor.blackColor()
+        if NSEqualRanges(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange) {
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
+        }
         self.mouseWasDragged = true
     }
     
@@ -604,16 +620,16 @@ extension RSTokenTextView {
         
         var index = NSMaxRange(self.selectedRange())
         if index - 1 < 0 { return }
-        self.insertionPointColor = NSColor.whiteColor()
         
         if textStorage.tokenStringAtIndex(index - 1) != nil {
             let area = NSMakeRange(index - 2, 3)
             textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
             index++
         }
+
         
         let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location >= index ? false : true
-        self.setTokensStatus(selected, startIndex: self.selectedRange().location, endIndex: index)
+        self.setTokenStatus(selected, startIndex: self.selectedRange().location, endIndex: index)
         
         //Set the old range if its not already selected (Could be selected due to drag)
         if !self.lastSelectedTokenPosition.selected {
@@ -625,6 +641,11 @@ extension RSTokenTextView {
         self.lastSelectedTokenPosition.direction = .Right
         
         self.setSelectedRange(NSMakeRange(index, 0))
+        self.insertionPointColor = index != self.lastSelectedTokenPosition.oldRange.location ? NSColor.whiteColor() : NSColor.blackColor()
+        
+        if NSEqualRanges(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange) {
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
+        }
         self.mouseWasDragged = true
         
     }
@@ -634,7 +655,6 @@ extension RSTokenTextView {
         // Do not want to do anything if the range is at the beginning
         if self.selectedRange().location == 0 { return }
         
-        self.insertionPointColor = NSColor.whiteColor()
         //Force the selection since we are not calling super here, Move to left by once cursor point
         let index = self.selectedRange().location - 1
         var newLocation = index
@@ -680,6 +700,8 @@ extension RSTokenTextView {
         self.lastSelectedTokenPosition.direction = .Left
         
         self.setSelectedRange(NSMakeRange(newLocation, 0))
+        self.insertionPointColor = newLocation != self.lastSelectedTokenPosition.oldRange.location ? NSColor.whiteColor() : NSColor.blackColor()
+        
         self.mouseWasDragged = true
     }
     
@@ -687,8 +709,6 @@ extension RSTokenTextView {
         guard let textStorage = self.textStorage else { return }
         // Do not want to do anything if the range is at the beginning
         if self.selectedRange().location == textStorage.length { return }
-        
-        self.insertionPointColor = NSColor.whiteColor()
         
         //Force the selection since we are not calling super here, Move to left by once cursor point
         let index = self.selectedRange().location
@@ -735,6 +755,8 @@ extension RSTokenTextView {
         self.lastSelectedTokenPosition.direction = .Right
         
         self.setSelectedRange(NSMakeRange(newLocation, 0))
+        self.insertionPointColor = newLocation != self.lastSelectedTokenPosition.oldRange.location ? NSColor.whiteColor() : NSColor.blackColor()
+        
         self.mouseWasDragged = true
     }
 }
@@ -744,6 +766,12 @@ extension RSTokenTextView {
     // Use Mouse Loop Tracking Approach
     override func mouseDown(theEvent: NSEvent) {
         guard let window = self.window else { return }
+        
+        //Check if the mouse is down while holding shift key
+        if theEvent.modifierFlags.contains(.ShiftKeyMask) {
+            self.handleShiftPlusMouseDown(theEvent)
+            return
+        }
         
         var dragActive = self.mouseDowned(theEvent)
         
@@ -762,23 +790,6 @@ extension RSTokenTextView {
                 }
             }
         }
-    }
-    
-    private func handleDoubleClickOnText() {
-        self.insertionPointColor = NSColor.whiteColor()
-        self.setTokensStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
-        
-        //Set the old range if its not already selected (Could be selected due to drag)
-        if !self.lastSelectedTokenPosition.selected {
-            self.lastSelectedTokenPosition.selected = true
-            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
-        }
-        //Continuously update the new range (disregard the length, just like in drag)
-        self.lastSelectedTokenPosition.newRange = NSMakeRange(NSMaxRange(self.selectedRange()), 0)
-        self.lastSelectedTokenPosition.direction = .Right
-        
-        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
-        self.mouseWasDragged = true
     }
     
     func mouseDowned(event: NSEvent) -> Bool {
@@ -821,7 +832,7 @@ extension RSTokenTextView {
                         curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
                     }
                     
-                    self.textStorage?.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
+                    textStorage.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
                     self.insertionPointColor = NSColor.blackColor()
                 } else {
                     super.mouseDown(event)
@@ -829,16 +840,14 @@ extension RSTokenTextView {
                     return false
                 }
             } else {
-                if NSPointInRect(pos, bounds) {
-                    NSLog("Mouse Down position is %d", charIndex)
-                    
+                if pos.x >= bounds.origin.x && pos.x <= bounds.origin.x + bounds.size.width {
                     if let attribute = (textStorage.attribute(NSAttachmentAttributeName, atIndex: charIndex, effectiveRange: nil)) {
                         if attribute is RSTextAttachment {
                             let buttonRect = ((attribute as! RSTextAttachment).tokenView?.type.frame)!
                             let imageViewRect = ((attribute as! RSTextAttachment).tokenView?.imageView.frame)!
                             let frameToCompare = NSMakeRect(bounds.origin.x, bounds.origin.y, buttonRect.width + imageViewRect.width, buttonRect.height)
                             
-                            if NSPointInRect(pos, frameToCompare) {
+                            if pos.x >= frameToCompare.origin.x && pos.x <= frameToCompare.origin.x + frameToCompare.size.width {
                                 // left click on token type
                                 (self.delegate as! RSTokenField).setToken(typeOnly: true, selected: true, atIndex: charIndex)
                                 self.setSelectedRange(NSMakeRange(charIndex + 2, 0))
@@ -853,15 +862,13 @@ extension RSTokenTextView {
                                 // left click on token title
                                 (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex)
                                 self.setSelectedRange(NSMakeRange(charIndex + 2, 0))
-                                
                                 self.insertionPointColor = NSColor.whiteColor()
                             }
                         }
                     } else {
                         if charIndex > 0 && textStorage.tokenStringAtIndex(charIndex - 1) != nil {
-                            (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex - 1)
-                            self.setSelectedRange(NSMakeRange(charIndex - 2, 0))
-                            self.insertionPointColor = NSColor.whiteColor()
+                            self.setSelectedRange(NSMakeRange(charIndex + 1, 0))
+                            self.insertionPointColor = NSColor.blackColor()
                         } else {
                             (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex)
                             self.setSelectedRange(NSMakeRange(charIndex, 0))
@@ -887,16 +894,12 @@ extension RSTokenTextView {
         let charIndex = eventMetaData["charIndex"] as! Int
         let fraction = eventMetaData["fraction"] as! CGFloat
         
-        NSLog("Dragged position is %d and selectedRange is %d", charIndex, self.selectedRange().location)
-        
         var finalIndex = charIndex
         self.lastSelectedTokenPosition.direction = charIndex >= self.selectedRange().location ? .Right : .Left
         
         if textStorage?.tokenStringAtIndex(charIndex) != nil {
             finalIndex = fraction < 0.5 ? charIndex : charIndex + 2
         }
-        
-        NSLog("fraction is %f", fraction)
         
         self.mouseDragged(toIndex: finalIndex, direction: self.lastSelectedTokenPosition.direction)
         
@@ -923,27 +926,27 @@ extension RSTokenTextView {
             return
         } else if startIndex > endIndex {
             //Unselect all the selected tokens
-            self.setTokensStatus(false, startIndex: endIndex, endIndex: startIndex)
+            self.setTokenStatus(false, startIndex: endIndex, endIndex: startIndex)
             return
         } else {
             switch direction {
             case .Left:
                 if self.selectedRange().location < textStorage.length {
                     //Unselect everything from endIndex till TextStorage.Length
-                    self.setTokensStatus(false, startIndex: self.selectedRange().location, endIndex: textStorage.length)
+                    self.setTokenStatus(false, startIndex: self.selectedRange().location, endIndex: textStorage.length)
                 }
                 break
             case .Right:
                 if self.selectedRange().location > 0 {
                     //Unselect everything from endIndex till TextStorage.Length
-                    self.setTokensStatus(false, startIndex: 0, endIndex: self.selectedRange().location - 1)
+                    self.setTokenStatus(false, startIndex: 0, endIndex: self.selectedRange().location - 1)
                 }
                 break
             default:
                 break
             }
             
-            self.setTokensStatus(true, startIndex: startIndex, endIndex: endIndex)
+            self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
         }
     }
     
@@ -1010,7 +1013,75 @@ extension RSTokenTextView {
 
 //MARK: HELPERS
 extension RSTokenTextView {
-    func getMetaDataForMouseEvent(theEvent: NSEvent) -> [String:AnyObject]? {
+    private func handleShiftPlusMouseDown(theEvent: NSEvent) {
+        //Set the old range to selected range location if its not already selected
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        
+        let charIndex = self.getMetaDataForMouseEvent(theEvent)!["charIndex"] as! Int
+        let fraction = self.getMetaDataForMouseEvent(theEvent)!["fraction"] as! CGFloat
+        var startIndex = self.lastSelectedTokenPosition.oldRange.location
+        var endIndex = charIndex
+        
+        //fraction distance fron the end of the glyph or character
+        if fraction > 0.5 {
+            endIndex = charIndex + 1
+        }
+        
+        let nearestRange = self.nearestRangeFor(endIndex, oldRange: self.lastSelectedTokenPosition.oldRange, newRange: self.lastSelectedTokenPosition.newRange)
+        
+        if NSEqualRanges(self.lastSelectedTokenPosition.oldRange, nearestRange) {
+            //This could mean the text cursor is either between new and old range or after old range
+            if self.lastSelectedTokenPosition.newRange.location != NSNotFound {
+                startIndex = self.lastSelectedTokenPosition.newRange.location
+                //Update oldRange to startIndex as the newRange is updated below and is about to change
+                self.lastSelectedTokenPosition.oldRange = NSMakeRange(startIndex, 0)
+            }
+        }
+        
+        //Erase any selection that is out of selected range
+        if endIndex > nearestRange.location {
+            self.setTokenStatus(false, startIndex: nearestRange.location, endIndex: endIndex)
+        } else {
+            self.setTokenStatus(false, startIndex: endIndex, endIndex: nearestRange.location)
+        }
+        //Set the current selection after erasing the previous selection
+        if startIndex > endIndex {
+            self.setTokenStatus(true, startIndex: endIndex, endIndex: startIndex)
+        } else {
+            self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
+        }
+        
+        
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(endIndex, 0)
+        self.lastSelectedTokenPosition.direction = startIndex > endIndex ? .Left : .Right
+        self.mouseWasDragged = true
+        
+        self.setSelectedRange(NSMakeRange(endIndex, 0))
+        self.insertionPointColor = startIndex != endIndex ? NSColor.whiteColor() : NSColor.blackColor()
+    }
+    
+    private func handleDoubleClickOnText() {
+        self.insertionPointColor = NSColor.whiteColor()
+        self.setTokenStatus(true, startIndex: self.selectedRange().location, endIndex: NSMaxRange(self.selectedRange()))
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(self.selectedRange().location, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(NSMaxRange(self.selectedRange()), 0)
+        self.lastSelectedTokenPosition.direction = .None
+        
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+        self.mouseWasDragged = true
+    }
+    
+    private func getMetaDataForMouseEvent(theEvent: NSEvent) -> [String:AnyObject]? {
         guard let layoutManager = self.layoutManager,textContainer = self.textContainer else { return nil }
         
         let pos = self.convertPoint(theEvent.locationInWindow, fromView: nil)
@@ -1024,7 +1095,7 @@ extension RSTokenTextView {
         return ["charIndex" : charIndex, "fraction" : fraction, "bounds" : NSValue.init(rect: bounds), "position" : NSValue.init(point: pos)]
     }
     
-    func setTokensStatus(selected: Bool, startIndex from: Int, endIndex to: Int) {
+    private func setTokenStatus(selected: Bool, startIndex from: Int, endIndex to: Int) {
         guard let textStorage = self.textStorage else { return }
         
         for var i = from; i < to; i++ {
@@ -1042,6 +1113,14 @@ extension RSTokenTextView {
                     textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
                 }
             }
+        }
+    }
+    
+    private func nearestRangeFor(index: Int, oldRange: NSRange, newRange: NSRange) -> NSRange {
+        if abs(oldRange.location - index) < abs(newRange.location - index) {
+            return oldRange
+        } else {
+            return newRange
         }
     }
 }
