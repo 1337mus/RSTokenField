@@ -576,11 +576,7 @@ extension RSTokenTextView {
         
         var index = self.selectedRange().location
         
-        if textStorage.tokenStringAtIndex(index) != nil {
-            let area = NSMakeRange(index, 2)
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-            index--
-        } else if self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.direction == .None {
+        if self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.direction == .None {
             //NOTE: This is a special case Mouse Double Click text Selection handling
             index = self.lastSelectedTokenPosition.oldRange.location
             //Continuously update the new range (disregard the length, just like in drag)
@@ -593,6 +589,14 @@ extension RSTokenTextView {
             self.moveWordLeftAndModifySelection(self)
             
             return
+        } else if textStorage.tokenStringAtIndex(index) != nil {
+            let area = NSMakeRange(index, 2)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+            
+            if textStorage.isTokenAtIndexSelected(index) && self.lastSelectedTokenPosition.selected {
+                self.lastSelectedTokenPosition.oldRange = NSMakeRange(index - 1, 0)
+            }
+            index--
         }
         
         let selected = self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.oldRange.location <= index && self.lastSelectedTokenPosition.direction != .None ? false : true
@@ -656,23 +660,33 @@ extension RSTokenTextView {
         if self.selectedRange().location == 0 { return }
         
         //Force the selection since we are not calling super here, Move to left by once cursor point
-        let index = self.selectedRange().location - 1
-        var newLocation = index
+        var newLocation = self.selectedRange().location - 1
         
-        if textStorage.isWhiteSpace(index) && textStorage.tokenStringAtIndex(index - 1) != nil {
-            if textStorage.tokenStringAtIndex(index - 1) != nil {
-                let force = self.lastSelectedTokenPosition.direction == .Right ? (self.mouseWasDragged ? false : true) : false
-                (self.delegate as! RSTokenField).setToken(true, atIndex: index - 1, force: force)
-                self.setSelectedRange(NSMakeRange(index + 1, 0))
-                
-                newLocation = index - 2
-                
-                if force {
-                    //This means we need to "select" the next token or character to the right
-                    self.setSelectedRange(NSMakeRange(newLocation, 0))
-                    self.moveLeftAndModifySelection(self)
-                    return
-                }
+        if self.lastSelectedTokenPosition.selected && self.lastSelectedTokenPosition.direction == .None {
+            //NOTE: This is a special case Mouse Double Click text Selection handling
+            newLocation = self.lastSelectedTokenPosition.oldRange.location
+            //Continuously update the new range (disregard the length, just like in drag)
+            self.lastSelectedTokenPosition.oldRange = self.lastSelectedTokenPosition.newRange
+            self.lastSelectedTokenPosition.newRange = NSMakeRange(newLocation, 0)
+            self.lastSelectedTokenPosition.direction = .Left
+            
+            newLocation -= 2
+        }
+        
+        let index = newLocation
+        
+        if textStorage.tokenStringAtIndex(index - 1) != nil {
+            let force = self.lastSelectedTokenPosition.direction == .Right ? (self.mouseWasDragged ? false : true) : false
+            (self.delegate as! RSTokenField).setToken(true, atIndex: index - 1, force: force)
+            self.setSelectedRange(NSMakeRange(index + 1, 0))
+            
+            newLocation = index - 2
+            
+            if force {
+                //This means we need to "select" the next token or character to the right
+                self.setSelectedRange(NSMakeRange(newLocation, 0))
+                self.moveLeftAndModifySelection(self)
+                return
             }
         } else {
             let area = NSMakeRange(index, 1)
@@ -860,9 +874,7 @@ extension RSTokenTextView {
                                 }
                             } else {
                                 // left click on token title
-                                (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex)
-                                self.setSelectedRange(NSMakeRange(charIndex + 2, 0))
-                                self.insertionPointColor = NSColor.whiteColor()
+                                self.handleSingleClickOnText(charIndex)
                             }
                         }
                     } else {
@@ -1080,6 +1092,26 @@ extension RSTokenTextView {
         self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
         self.mouseWasDragged = true
     }
+    
+    private func handleSingleClickOnText(charIndex: Int) {
+        // Insert white space after the token
+        self.setTokenStatus(true, startIndex: charIndex, endIndex: charIndex + 2)
+        
+        self.insertionPointColor = NSColor.whiteColor()
+        
+        
+        //Set the old range if its not already selected (Could be selected due to drag)
+        if !self.lastSelectedTokenPosition.selected {
+            self.lastSelectedTokenPosition.selected = true
+            self.lastSelectedTokenPosition.oldRange = NSMakeRange(charIndex, 0)
+        }
+        //Continuously update the new range (disregard the length, just like in drag)
+        self.lastSelectedTokenPosition.newRange = NSMakeRange(charIndex + 2, 0)
+        self.lastSelectedTokenPosition.direction = .None
+        
+        self.setSelectedRange(self.lastSelectedTokenPosition.newRange)
+    }
+    
     
     private func getMetaDataForMouseEvent(theEvent: NSEvent) -> [String:AnyObject]? {
         guard let layoutManager = self.layoutManager,textContainer = self.textContainer else { return nil }
