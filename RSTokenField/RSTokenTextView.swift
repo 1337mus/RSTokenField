@@ -25,7 +25,16 @@ class RSTokenTextView: NSTextView {
     }
     
     private var lastSelectedTokenPosition = RSTokenPosition()
-    private var mouseWasDragged: Bool = false
+    private var mouseWasDragged: Bool = false {
+        willSet {
+            if newValue == false {
+                self.insertionPointColor = NSColor.blackColor()
+                self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
+                self.textStorage?.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, (self.textStorage?.length)!))
+                self.lastSelectedTokenPosition = RSTokenPosition()
+            }
+        }
+    }
 
     
     //MARK: Private Properties
@@ -69,11 +78,8 @@ class RSTokenTextView: NSTextView {
         guard let textStorage = self.textStorage else { return }
         // Erase all the selection and reset the attributes for textStorage and typing
         if self.mouseWasDragged {
-            self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
             textStorage.replaceCharactersInRange(deleteRange, withString: "")
-            self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
         }
         
@@ -123,36 +129,20 @@ class RSTokenTextView: NSTextView {
             return
         } else if aSelector == "moveToLeftEndOfLine:" {
             (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
-            self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
-            
             self.setSelectedRange(NSMakeRange(0, 0))
-            
-            self.insertionPointColor = NSColor.blackColor()
-            let area = NSMakeRange(0, textStorage.length)
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
         } else if aSelector == "moveToRightEndOfLine:" {
             (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
-            self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
-            
             self.setSelectedRange(NSMakeRange(textStorage.length, 0))
-            
-            self.insertionPointColor = NSColor.blackColor()
-            let area = NSMakeRange(0, textStorage.length)
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
         } else if aSelector == "deleteBackward:" {
             if self.mouseWasDragged {
-                self.mouseWasDragged = false
-                
                 let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
                 
                 NSLog("Delete Range Location is %d and Length %d", deleteRange.location, abs(deleteRange.length))
                 
                 textStorage.replaceCharactersInRange(deleteRange, withString: "")
-                self.insertionPointColor = NSColor.blackColor()
-                
-                self.lastSelectedTokenPosition = RSTokenPosition()
+                self.mouseWasDragged = false
                 return
             }
             
@@ -201,7 +191,7 @@ class RSTokenTextView: NSTextView {
             
             return
         } else if aSelector == "moveLeft:" {
-            if mouseWasDragged {
+            if self.mouseWasDragged {
                 (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: 0)
                 
                 var insertionIndex = 0
@@ -219,12 +209,8 @@ class RSTokenTextView: NSTextView {
                 } else {
                     self.setSelectedRange(NSMakeRange(insertionIndex, 0))
                 }
-                self.insertionPointColor = NSColor.blackColor()
-                let area = NSMakeRange(0, textStorage.length)
-                textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
                 
-                self.lastSelectedTokenPosition = RSTokenPosition()
-                mouseWasDragged = false
+                self.mouseWasDragged = false
                 return
             }
             
@@ -275,14 +261,8 @@ class RSTokenTextView: NSTextView {
                 } else {
                     self.setSelectedRange(NSMakeRange(insertionIndex, 0))
                 }
-                self.insertionPointColor = NSColor.blackColor()
-                let area = NSMakeRange(0, textStorage.length)
-                textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-                
-                //Reset Selected Token variables
-                self.lastSelectedTokenPosition = RSTokenPosition()
+
                 self.mouseWasDragged = false
-                
                 return
             } else {
                 self.lastSelectedTokenPosition = RSTokenPosition()
@@ -500,7 +480,6 @@ extension RSTokenTextView {
         
         self.setSelectedRange(NSMakeRange(index, 0))
         self.mouseWasDragged = false
-        self.lastSelectedTokenPosition = RSTokenPosition()
     }
     
     override func moveWordRight(sender: AnyObject?) {
@@ -527,7 +506,6 @@ extension RSTokenTextView {
         
         self.setSelectedRange(NSMakeRange(index, 0))
         self.mouseWasDragged = false
-        self.lastSelectedTokenPosition = RSTokenPosition()
     }
     
     override func moveToLeftEndOfLineAndModifySelection(sender: AnyObject?) {
@@ -1054,16 +1032,8 @@ extension RSTokenTextView {
     }
     
     private func clearLastTokenPosition() {
-        guard let textStorage = self.textStorage else { return }
-        
         if self.mouseWasDragged {
-            self.insertionPointColor = NSColor.whiteColor()
-            
             (self.delegate as! RSTokenField!).setToken(typeOnly: false, selected: true, atIndex: NSNotFound)
-            let area = NSMakeRange(0, textStorage.length)
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-            
-            self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
         }
     }
