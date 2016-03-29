@@ -787,17 +787,17 @@ extension RSTokenTextView {
             return
         }
         
-        var dragActive = self.mouseDowned(theEvent)
+        var dragActive = self.mouseDownEvent(theEvent)
         
         while dragActive {
             if let event = window.nextEventMatchingMask(Int(NSEventMask.LeftMouseDraggedMask.union(.LeftMouseUpMask).rawValue), untilDate: NSDate.distantFuture(), inMode: NSEventTrackingRunLoopMode, dequeue: true) {
                 switch event.type {
                 case .LeftMouseDragged:
-                    self.mouseDrag(event)
+                    self.mouseDraggedEvent(event)
                     break
                 case .LeftMouseUp:
                     dragActive = false
-                    self.mouseUpp(event)
+                    self.mouseUpEvent(event)
                     break
                 default:
                     break
@@ -806,50 +806,28 @@ extension RSTokenTextView {
         }
     }
     
-    func mouseDowned(event: NSEvent) -> Bool {
+    func mouseDownEvent(theEvent: NSEvent) -> Bool {
         guard let textStorage = self.textStorage else { return false }
+        // Reset token position values
+        self.clearLastTokenPosition()
         
-        if self.mouseWasDragged {
-            self.insertionPointColor = NSColor.whiteColor()
-            
-            (self.delegate as! RSTokenField!).setToken(typeOnly: false, selected: true, atIndex: NSNotFound)
-            let area = NSMakeRange(0, textStorage.length)
-            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
-            
-            self.lastSelectedTokenPosition = RSTokenPosition()
-            self.mouseWasDragged = false
-        }
-        
-        self.lastSelectedTokenPosition = RSTokenPosition()
-        
-        if event.type == .LeftMouseDown {
-            guard let eventMetaData = self.getMetaDataForMouseEvent(event) else { return false }
+        if theEvent.type == .LeftMouseDown {
+            guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return false }
             
             let charIndex = eventMetaData["charIndex"] as! Int
             let pos = (eventMetaData["position"] as! NSValue).pointValue
             let bounds = (eventMetaData["bounds"] as! NSValue).rectValue
             
-            if event.clickCount == 3 {
+            if theEvent.clickCount == 3 {
                 self.selectAll(self)
                 return false
-            } else if event.clickCount == 2 {
+            } else if theEvent.clickCount == 2 {
                 // Handle double click
                 if textStorage.tokenStringAtIndex(charIndex) != nil {
-                    var stem = ""
-                    var curRange = NSMakeRange(charIndex, 0)
-                    while curRange.location != NSNotFound {
-                        let attribute = textStorage.attribute(NSAttachmentAttributeName, atIndex: curRange.location, effectiveRange: &curRange)
-                        if attribute is RSTextAttachment {
-                            stem = (attribute as! RSTextAttachment).tokenView.tokenItem.stem
-                            break
-                        }
-                        curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
-                    }
-                    
-                    textStorage.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
-                    self.insertionPointColor = NSColor.blackColor()
+                    self.handleDoubleClickOnToken(charIndex)
                 } else {
-                    super.mouseDown(event)
+                    //We Call super here to get the text select functionality for free
+                    super.mouseDown(theEvent)
                     self.handleDoubleClickOnText()
                     return false
                 }
@@ -878,7 +856,9 @@ extension RSTokenTextView {
                             }
                         }
                     } else {
+                        //This piece of code is executed when a token is not selected
                         if charIndex > 0 && textStorage.tokenStringAtIndex(charIndex - 1) != nil {
+                            //We get here when the mouse is clicked on the white space right after a token, we offset it by 1
                             self.setSelectedRange(NSMakeRange(charIndex + 1, 0))
                             self.insertionPointColor = NSColor.blackColor()
                         } else {
@@ -898,7 +878,7 @@ extension RSTokenTextView {
         return true
     }
     
-    func mouseDrag(theEvent: NSEvent) {
+    func mouseDraggedEvent(theEvent: NSEvent) {
         self.mouseWasDragged = true
         
         guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return }
@@ -963,7 +943,7 @@ extension RSTokenTextView {
     }
     
     
-    func mouseUpp(theEvent: NSEvent) {
+    func mouseUpEvent(theEvent: NSEvent) {
         guard let textStorage = self.textStorage else { return }
         
         let index = self.lastSelectedTokenPosition.newRange.location
@@ -1074,6 +1054,38 @@ extension RSTokenTextView {
         
         self.setSelectedRange(NSMakeRange(endIndex, 0))
         self.insertionPointColor = startIndex != endIndex ? NSColor.whiteColor() : NSColor.blackColor()
+    }
+    
+    private func clearLastTokenPosition() {
+        guard let textStorage = self.textStorage else { return }
+        
+        if self.mouseWasDragged {
+            self.insertionPointColor = NSColor.whiteColor()
+            
+            (self.delegate as! RSTokenField!).setToken(typeOnly: false, selected: true, atIndex: NSNotFound)
+            let area = NSMakeRange(0, textStorage.length)
+            textStorage.removeAttribute(NSBackgroundColorAttributeName, range: area)
+            
+            self.lastSelectedTokenPosition = RSTokenPosition()
+            self.mouseWasDragged = false
+        }
+    }
+    
+    private func handleDoubleClickOnToken(charIndex: Int) {
+        guard let textStorage = self.textStorage else { return }
+        var stem = ""
+        var curRange = NSMakeRange(charIndex, 0)
+        while curRange.location != NSNotFound {
+            let attribute = textStorage.attribute(NSAttachmentAttributeName, atIndex: curRange.location, effectiveRange: &curRange)
+            if attribute is RSTextAttachment {
+                stem = (attribute as! RSTextAttachment).tokenView.tokenItem.stem
+                break
+            }
+            curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
+        }
+        
+        textStorage.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
+        self.insertionPointColor = NSColor.blackColor()
     }
     
     private func handleDoubleClickOnText() {
