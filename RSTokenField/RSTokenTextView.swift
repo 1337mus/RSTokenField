@@ -11,7 +11,7 @@ import Cocoa
 class RSTokenTextView: NSTextView {
 
     //MARK: Public Properties
-    struct RSTokenPosition {
+    private struct RSTokenPosition {
         enum Direction {
             case Left
             case Right
@@ -24,8 +24,8 @@ class RSTokenTextView: NSTextView {
         var newRange: NSRange = NSMakeRange(NSNotFound, NSNotFound)
     }
     
-    var lastSelectedTokenPosition = RSTokenPosition()
-    var mouseWasDragged: Bool = false
+    private var lastSelectedTokenPosition = RSTokenPosition()
+    private var mouseWasDragged: Bool = false
 
     
     //MARK: Private Properties
@@ -72,9 +72,7 @@ class RSTokenTextView: NSTextView {
             self.typingAttributes = [NSFontAttributeName:NSFont.systemFontOfSize(12)]
             textStorage.removeAttribute(NSBackgroundColorAttributeName, range: NSMakeRange(0, textStorage.length))
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-          //  if deleteRange.length < textStorage.length {
-                textStorage.replaceCharactersInRange(deleteRange, withString: "")
-           // }
+            textStorage.replaceCharactersInRange(deleteRange, withString: "")
             self.lastSelectedTokenPosition = RSTokenPosition()
             self.mouseWasDragged = false
         }
@@ -806,7 +804,7 @@ extension RSTokenTextView {
         }
     }
     
-    func mouseDownEvent(theEvent: NSEvent) -> Bool {
+    private func mouseDownEvent(theEvent: NSEvent) -> Bool {
         guard let textStorage = self.textStorage else { return false }
         // Reset token position values
         self.clearLastTokenPosition()
@@ -878,7 +876,7 @@ extension RSTokenTextView {
         return true
     }
     
-    func mouseDraggedEvent(theEvent: NSEvent) {
+    private func mouseDraggedEvent(theEvent: NSEvent) {
         self.mouseWasDragged = true
         
         guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return }
@@ -903,47 +901,7 @@ extension RSTokenTextView {
         self.lastSelectedTokenPosition.newRange = NSMakeRange(finalIndex, 0)
     }
     
-    func mouseDragged(toIndex index: Int, direction: RSTokenPosition.Direction) {
-        guard let textStorage = self.textStorage else { return }
-        
-        var startIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
-        var endIndex = index
-        
-        if direction == .Left {
-            endIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
-            startIndex = index
-        }
-        
-        if startIndex == endIndex {
-            return
-        } else if startIndex > endIndex {
-            //Unselect all the selected tokens
-            self.setTokenStatus(false, startIndex: endIndex, endIndex: startIndex)
-            return
-        } else {
-            switch direction {
-            case .Left:
-                if self.selectedRange().location < textStorage.length {
-                    //Unselect everything from endIndex till TextStorage.Length
-                    self.setTokenStatus(false, startIndex: self.selectedRange().location, endIndex: textStorage.length)
-                }
-                break
-            case .Right:
-                if self.selectedRange().location > 0 {
-                    //Unselect everything from endIndex till TextStorage.Length
-                    self.setTokenStatus(false, startIndex: 0, endIndex: self.selectedRange().location - 1)
-                }
-                break
-            default:
-                break
-            }
-            
-            self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
-        }
-    }
-    
-    
-    func mouseUpEvent(theEvent: NSEvent) {
+    private func mouseUpEvent(theEvent: NSEvent) {
         guard let textStorage = self.textStorage else { return }
         
         let index = self.lastSelectedTokenPosition.newRange.location
@@ -1005,6 +963,45 @@ extension RSTokenTextView {
 
 //MARK: HELPERS
 extension RSTokenTextView {
+    private func mouseDragged(toIndex index: Int, direction: RSTokenPosition.Direction) {
+        guard let textStorage = self.textStorage else { return }
+        
+        var startIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
+        var endIndex = index
+        
+        if direction == .Left {
+            endIndex = self.lastSelectedTokenPosition.selected ? self.lastSelectedTokenPosition.newRange.location : self.selectedRange().location
+            startIndex = index
+        }
+        
+        if startIndex == endIndex {
+            return
+        } else if startIndex > endIndex {
+            //Unselect all the selected tokens
+            self.setTokenStatus(false, startIndex: endIndex, endIndex: startIndex)
+            return
+        } else {
+            switch direction {
+            case .Left:
+                if self.selectedRange().location < textStorage.length {
+                    //Unselect everything from endIndex till TextStorage.Length
+                    self.setTokenStatus(false, startIndex: self.selectedRange().location, endIndex: textStorage.length)
+                }
+                break
+            case .Right:
+                if self.selectedRange().location > 0 {
+                    //Unselect everything from endIndex till TextStorage.Length
+                    self.setTokenStatus(false, startIndex: 0, endIndex: self.selectedRange().location - 1)
+                }
+                break
+            default:
+                break
+            }
+            
+            self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
+        }
+    }
+    
     private func handleShiftPlusMouseDown(theEvent: NSEvent) {
         //Set the old range to selected range location if its not already selected
         if !self.lastSelectedTokenPosition.selected {
