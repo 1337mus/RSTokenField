@@ -1095,7 +1095,7 @@ extension RSTokenTextView {
     
     private func handleSingleClickOnText(charIndex: Int) {
         // Insert white space after the token
-        self.setTokenStatus(true, startIndex: charIndex, endIndex: charIndex + 2)
+        (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: charIndex)
         
         self.insertionPointColor = NSColor.whiteColor()
         
