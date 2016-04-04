@@ -19,6 +19,16 @@ class RSTextAttachment: NSTextAttachment {
         self.attachmentCell = cell
     }
     
+    required convenience init?(coder aDecoder: NSCoder) {
+        guard let v = aDecoder.decodeObjectForKey("tokenView") else { return nil }
+        self.init(withTokenView:v as! RSTokenView)
+    }
+    
+    override func encodeWithCoder(aCoder: NSCoder) {
+        super.encodeWithCoder(aCoder)
+        aCoder.encodeObject(self.tokenView, forKey: "tokenView")
+    }
+    
     func refreshTokenView() {
         let cell = RSTextAttachmentCell(imageCell:tokenView.imageRepresentation())
         self.attachmentCell = cell

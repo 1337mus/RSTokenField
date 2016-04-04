@@ -23,6 +23,34 @@ import Cocoa
     private var selectedBackgroundColor: NSColor = NSColor.controlHighlightColor()
     private var selectedTypeColor: NSColor = NSColor(white: 218.0/255.0, alpha: 1)
     
+    override var description: String {
+        get {
+            return tokenItem.tokenType + "," + tokenItem.tokenTitle
+        }
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        
+        if  let type = coder.decodeObjectForKey("type"), let title = coder.decodeObjectForKey("title"), let imageView = coder.decodeObjectForKey("imageView"),
+            let tokenItem = coder.decodeObjectForKey("tokenItem") {
+            self.type = type as! NSTextField
+            self.title = title as! NSTextField
+            self.imageView = imageView as! NSImageView
+            self.tokenItem = tokenItem as! RSTokenItem
+        }
+        
+    }
+    
+    override func encodeWithCoder(aCoder: NSCoder) {
+        super.encodeWithCoder(aCoder)
+        
+        aCoder.encodeObject(self.type, forKey: "type")
+        aCoder.encodeObject(self.title, forKey: "title")
+        aCoder.encodeObject(self.imageView, forKey: "imageView")
+        aCoder.encodeObject(self.tokenItem, forKey: "tokenItem")
+    }
+    
     var tokenItem: RSTokenItem! {
         didSet {
             self.type.stringValue = tokenItem.tokenType.uppercaseString
@@ -88,6 +116,7 @@ import Cocoa
             }
         }
     }
+    
     
     override func drawRect(dirtyRect: NSRect) {
         let rect = NSMakeRect(dirtyRect.origin.x, dirtyRect.origin.y, self.type.frame.width + self.imageView.frame.width, dirtyRect.height)

@@ -90,7 +90,7 @@ class RSTokenField: NSTextField {
             return self.tokenArray as? AnyObject
         }
     }
-    
+
     //MARK: Public Methods
     
     func replaceToken(withType type: String, tokenTitle title: String, atIndex index: Int) {

@@ -42,13 +42,21 @@ extension NSAttributedString {
     }
     
     func isTokenAtIndexSelected(index: Int) -> Bool {
+        var flag = false
         if index < self.length {
-            let attribute = self.attribute(NSAttachmentAttributeName, atIndex: index, effectiveRange: nil)
+            /*let attribute = self.attribute(NSAttachmentAttributeName, atIndex: index, effectiveRange: nil)
             if attribute is RSTextAttachment {
                 return (attribute as! RSTextAttachment).tokenView.selected
+            }*/
+            self.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, index), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
+                if let v = value as? RSTextAttachment {
+                    if range.location == index {
+                        flag = v.tokenView.selected
+                    }
+                }
             }
         }
-        return false
+        return flag
     }
     
     func isTextButNotWhiteSpace(index: Int) -> Bool {
