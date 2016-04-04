@@ -294,11 +294,18 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
                     self.replaceCharactersInRange(NSMakeRange(self.selectedRange().location, 3), withString: "")
                     self.insertionPointColor = NSColor.blackColor()
                 } else if tokenIndex > 0 && textStorage.tokenStringAtIndex(tokenIndex) != nil {
-                    //This is a token, highlight this but do not delete it
-                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: tokenIndex)
+                    if textStorage.isTokenAtIndexSelected(tokenIndex) {
+                        //The token is already selected and ready to be deleted at this point
+                        self.replaceCharactersInRange(NSMakeRange(tokenIndex - 1, 3), withString: "")
+                        self.insertionPointColor = NSColor.blackColor()
+                    } else {
+                        //This is a token, highlight this but do not delete it
+                        (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: tokenIndex)
+                        self.insertionPointColor = NSColor.whiteColor()
+                    }
                     //Offset the text cursor position by token position - 1 (whitespace)
                     self.setSelectedRange(NSMakeRange(tokenIndex - 1, 0))
-                    self.insertionPointColor = NSColor.whiteColor()
+                    
                 } else {
                     //delete the character
                     super.deleteBackward(self)
