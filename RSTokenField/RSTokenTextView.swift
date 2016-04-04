@@ -283,56 +283,32 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
         } else if aSelector == "deleteBackward:" {
             if self.mouseWasDragged {
                 let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-                
-                NSLog("Delete Range Location is %d and Length %d", deleteRange.location, abs(deleteRange.length))
-                
                 textStorage.replaceCharactersInRange(deleteRange, withString: "")
                 self.mouseWasDragged = false
-                return
-            }
-            
-            var finalSelectedRange = 0
-            if self.selectedRange.length > 0 {
-                let deleteRange = self.selectedRange
-                textStorage.replaceCharactersInRange(deleteRange, withString: "")
-                self.setSelectedRange(NSMakeRange(deleteRange.location, 0))
-                if completionController.isDisplayingCompletions() {
-                    self.abandonCompletion()
-                }
             } else if self.selectedRange.location >= 0 {
                 
-                var deleteIndex = self.selectedRange.location + 1
-                var selectedTokenIndex = (self.delegate as! RSTokenField).selectedTokenRangeForGivenRange(NSMakeRange(deleteIndex, 0))
-                if selectedTokenIndex.location == NSNotFound {
-                    deleteIndex = self.selectedRange.location - 2
-                    selectedTokenIndex = (self.delegate as! RSTokenField).selectedTokenRangeForGivenRange(NSMakeRange(deleteIndex, 0))
-                }
+                let tokenIndex = self.selectedRange().location - 2
                 
-                if selectedTokenIndex.location != NSNotFound {
-                    textStorage.replaceCharactersInRange(NSMakeRange(deleteIndex, 1), withString: "")
-                    finalSelectedRange = deleteIndex - 1
+                if self.selectedRange().location < textStorage.length && textStorage.isTokenAtIndexSelected(self.selectedRange().location + 1) {
+                    //The token is already selected and ready to be deleted at this point
+                    self.replaceCharactersInRange(NSMakeRange(self.selectedRange().location, 3), withString: "")
                     self.insertionPointColor = NSColor.blackColor()
+                } else if tokenIndex > 0 && textStorage.tokenStringAtIndex(tokenIndex) != nil {
+                    //This is a token, highlight this but do not delete it
+                    (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: tokenIndex)
+                    //Offset the text cursor position by token position - 1 (whitespace)
+                    self.setSelectedRange(NSMakeRange(tokenIndex - 1, 0))
+                    self.insertionPointColor = NSColor.whiteColor()
                 } else {
-                
-                    deleteIndex = self.selectedRange.location - 2
-                    
-                    if (deleteIndex > 0 && (self.textStorage?.tokenStringAtIndex(deleteIndex)) != nil) {
-                        (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: deleteIndex)
-                        finalSelectedRange = deleteIndex - 1
-                        self.insertionPointColor = NSColor.whiteColor()
-                    } else {
-                        let deleteRange = ((self.textStorage?.string)! as NSString).rangeOfComposedCharacterSequenceAtIndex(deleteIndex + 1)
-                        textStorage.replaceCharactersInRange(deleteRange, withString: "")
-                        finalSelectedRange = deleteRange.location
-                        if completionController.isDisplayingCompletions() {
-                            completionController.tearDownWindow()
-                        }
-                        self.insertionPointColor = NSColor.blackColor()
+                    //delete the character
+                    super.deleteBackward(self)
+                    //Abandon any token completion
+                    if completionController.isDisplayingCompletions() {
+                        completionController.tearDownWindow()
                     }
+                    self.insertionPointColor = NSColor.blackColor()
                 }
             }
-            
-            self.setSelectedRange(NSMakeRange(finalSelectedRange, 0))
             
             return
         } else if aSelector == "moveLeft:" {
