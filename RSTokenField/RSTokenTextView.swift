@@ -123,7 +123,7 @@ class RSTokenTextView: NSTextView {
     
     override func insertText(aString: AnyObject, replacementRange: NSRange) {
         guard let textStorage = self.textStorage else { return }
-        //self.undoManager?.beginUndoGrouping()
+        self.undoManager?.beginUndoGrouping()
         // Erase all the selection and reset the attributes for textStorage and typing
         if self.mouseWasDragged {
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
@@ -172,7 +172,7 @@ class RSTokenTextView: NSTextView {
         self.setSelectedRange(NSMakeRange(insertionIndex, 0))
         
         super.insertText(aString, replacementRange: replacementRange)
-        //self.undoManager?.endUndoGrouping()
+        self.undoManager?.endUndoGrouping()
     }
     
     override func doCommandBySelector(aSelector: Selector) {
@@ -1286,12 +1286,18 @@ extension RSTokenTextView {
 //MARK : UNDO Manager
 extension RSTokenTextView {
     func undo(sender: AnyObject?) {
+        guard let undoManager = self.undoManager else { return }
         //This is needed when there is no "Edit" Menu
-        self.undoManager?.undo()
+        if !undoManager.redoing {
+            undoManager.undo()
+        }
     }
     
     func redo(sender: AnyObject?) {
-        self.undoManager?.redo()
+        guard let undoManager = self.undoManager else { return }
+        if !undoManager.undoing {
+            undoManager.redo()
+        }
     }
     
     private func dumpUndoStack() {
