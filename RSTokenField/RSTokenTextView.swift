@@ -1042,7 +1042,7 @@ extension RSTokenTextView {
         var endIndex = charIndex
         
         //fraction distance fron the end of the glyph or character
-        if fraction > 0.5 {
+        if fraction > 0.5 && self.textStorage?.tokenStringAtIndex(charIndex) == nil {
             endIndex = charIndex + 1
         }
         
@@ -1058,17 +1058,9 @@ extension RSTokenTextView {
         }
         
         //Erase any selection that is out of selected range
-        if endIndex > nearestRange.location {
-            self.setTokenStatus(false, startIndex: nearestRange.location, endIndex: endIndex)
-        } else {
-            self.setTokenStatus(false, startIndex: endIndex, endIndex: nearestRange.location)
-        }
+        self.setTokenStatus(false, startIndex: nearestRange.location, endIndex: endIndex)
         //Set the current selection after erasing the previous selection
-        if startIndex > endIndex {
-            self.setTokenStatus(true, startIndex: endIndex, endIndex: startIndex)
-        } else {
-            self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
-        }
+        self.setTokenStatus(true, startIndex: startIndex, endIndex: endIndex)
         
         
         //Continuously update the new range (disregard the length, just like in drag)
@@ -1160,8 +1152,13 @@ extension RSTokenTextView {
     
     private func setTokenStatus(selected: Bool, startIndex from: Int, endIndex to: Int) {
         guard let textStorage = self.textStorage else { return }
+        var f = from, t = to
+        if from > to {
+            t = from
+            f = to
+        }
         
-        for var i = from; i < to; i++ {
+        for var i = f; i < t; i++ {
             if textStorage.tokenStringAtIndex(i) != nil {
                 let range = self.selectedRange()
                 (self.delegate as! RSTokenField).setToken(selected, atIndex: i, force: true)
