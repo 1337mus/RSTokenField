@@ -31,53 +31,11 @@ class RSTokenField: NSTextField {
         }
         
         set {
-            if newValue != nil {
-                    let appendedAttributeString = NSMutableAttributedString()
-                    
-                    let whiteSpace = NSMutableAttributedString(string: " ")
-                    
-                    for token in newValue.reverse() {
-                        if let t = token as? RSTokenItem {
-                            var topLevelObjects: NSArray?
-                            NSBundle.mainBundle().loadNibNamed("RSTokenView", owner:self, topLevelObjects:&topLevelObjects)
-                            
-                            var view: RSTokenView!
-                            
-                            for o in topLevelObjects! {
-                                if o is RSTokenView {
-                                    view = o as! RSTokenView
-                                    view!.tokenItem = t
-                                }
-                            }
-                            
-                            let attachment = RSTextAttachment.init(withTokenView: view)
-                            
-                            let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
-                            attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
-                            attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
-                            
-                            appendedAttributeString.appendAttributedString(whiteSpace)
-                            appendedAttributeString.appendAttributedString(attributeString)
-                            appendedAttributeString.appendAttributedString(whiteSpace)
-                            
-                        } else if let t = token as? RSTokenItemSection {
-                            let sectionName = NSAttributedString.init(string: t.sectionName, attributes: [NSFontAttributeName : NSFont.systemFontOfSize(12)])
-                            appendedAttributeString.appendAttributedString(sectionName)
-                        }
-                    }
-                    
-                    self.attributedStringValue = appendedAttributeString
-                    
-                    if let cell = self.cell {
-                        self.fieldEditor = cell.fieldEditorForView(self) as? RSTokenTextView
-                    }
-                    
-                    if let textStorage = self.fieldEditor!.textStorage {
-                        textStorage.setAttributedString(appendedAttributeString)
-                    }
-            }
-            
             self._tokenArray = newValue
+            
+            if let cell = self.cell {
+                self.fieldEditor = cell.fieldEditorForView(self) as? RSTokenTextView
+            }
         }
     }
     
@@ -95,9 +53,6 @@ class RSTokenField: NSTextField {
     
     func replaceToken(withType type: String, tokenTitle title: String, atIndex index: Int) {
         let mutableAttrString = self.attributedStringValue.mutableCopy() as! NSMutableAttributedString
-        guard let fieldEditor = self.fieldEditor, let textStorage = fieldEditor.textStorage else {
-            return
-        }
         
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let val = value, let v = val as? RSTextAttachment {
@@ -125,14 +80,15 @@ class RSTokenField: NSTextField {
                     self.tokenArray[arrayIndex] = v.tokenView.tokenItem
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
-                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                    let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
+                    attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
+                    attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
+                    
+                    self.fieldEditor?.textStorage?.replaceCharactersInRange(range, withAttributedString: attributeString)
                     stop.initialize(true)
                 }
             }
         }
-        
-        self.attributedStringValue = mutableAttrString
-        textStorage.setAttributedString(mutableAttrString)
     }
     
     func setToken(typeOnly type: Bool, selected: Bool, atIndex index: Int) {
@@ -140,8 +96,6 @@ class RSTokenField: NSTextField {
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let v = value as? RSTextAttachment {
                 if range.location == index {
-                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
-                    
                     if type {
                         v.tokenView.typeSelected = selected && !v.tokenView.selected
                     } else {
@@ -149,23 +103,24 @@ class RSTokenField: NSTextField {
                     }
                     
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
-                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
                     
+                    let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
+                    attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
+                    attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
+                    
+                    self.fieldEditor?.textStorage?.replaceCharactersInRange(range, withAttributedString: attributeString)
                 } else if !type {
-                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
                     v.tokenView.selected = !selected
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
                     
-                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                    let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
+                    attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
+                    attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
+                    
+                    self.fieldEditor?.textStorage?.replaceCharactersInRange(range, withAttributedString: attributeString)
                 }
                 
             }
-        }
-        
-        self.attributedStringValue = mutableAttrString
-        
-        if let fieldEditor = self.fieldEditor, let textStorage = fieldEditor.textStorage {
-            textStorage.setAttributedString(mutableAttrString)
         }
     }
     
@@ -179,22 +134,19 @@ class RSTokenField: NSTextField {
         mutableAttrString.enumerateAttribute(NSAttachmentAttributeName, inRange: NSMakeRange(0, mutableAttrString.length), options: .LongestEffectiveRangeNotRequired) { (value: AnyObject?, range: NSRange, stop) -> Void in
             if let v = value as? RSTextAttachment {
                 if range.location == index {
-                    mutableAttrString.removeAttribute(NSAttachmentAttributeName, range: range)
                     v.tokenView.selected = force ? selected : !v.tokenView.selected
                     
                     let attachment = RSTextAttachment.init(withTokenView: v.tokenView)
-                    mutableAttrString.addAttribute(NSAttachmentAttributeName, value: attachment, range: range)
+                    let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
+                    attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
+                    attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
+                    
+                    self.fieldEditor?.textStorage?.replaceCharactersInRange(range, withAttributedString: attributeString)
                     
                     stop.initialize(true)
                 }
                 
             }
-        }
-        
-        self.attributedStringValue = mutableAttrString
-        
-        if let fieldEditor = self.fieldEditor, let textStorage = fieldEditor.textStorage {
-            textStorage.setAttributedString(mutableAttrString)
         }
     }
     
@@ -222,6 +174,10 @@ extension RSTokenField: NSTextViewDelegate {
     
     override func textShouldEndEditing(textObject: NSText) -> Bool {
         return true
+    }
+    
+    func undoManagerForTextView(view: NSTextView) -> NSUndoManager? {
+        return self.undoManager
     }
 }
 

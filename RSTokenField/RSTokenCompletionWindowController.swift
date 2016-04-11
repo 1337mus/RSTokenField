@@ -235,7 +235,11 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     }
     
     func chooseCompletion(completion: String, forTextView aTextView: RSTokenTextView) {
-        aTextView.insertTokenForText(completion, replacementRange: aTextView.rangeForCompletion())
+        //Replace the stem with the token
+        let selectedRange = aTextView.selectedRange()
+        aTextView.setSelectedRange(NSMakeRange(selectedRange.location - self.rawStem.characters.count, self.rawStem.characters.count))
+        aTextView.delete(nil)
+        aTextView.insertTokenForText(completion, replacementRange: NSMakeRange(selectedRange.location - self.rawStem.characters.count , 3))
     }
     
     // MARK: TableView Delegate Methods

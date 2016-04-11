@@ -18,6 +18,8 @@ class RSTokenFieldCell: NSTextFieldCell, NSTextViewDelegate {
         dispatch_once(&Static.onceToken) {
             Static.tokenTextView = RSTokenTextView()
             Static.tokenTextView?.fieldEditor = true
+            NSNotificationCenter.defaultCenter().addObserver(Static.tokenTextView!, selector: "didRedo:", name: NSUndoManagerDidRedoChangeNotification, object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(Static.tokenTextView!, selector: "didUndo:", name: NSUndoManagerDidUndoChangeNotification, object: nil)
         }
         
         return Static.tokenTextView

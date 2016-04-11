@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
+class RSTokenTextView: NSTextView {
 
     //MARK: Private Properties
     private struct RSTokenPosition {
@@ -38,6 +38,7 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
     
     private var lastEnteredStem: String = ""
     private var copiedString: NSMutableAttributedString? = nil
+    private var didRedoDelete: Bool = false
     
     //MARK: Overrides
     override func resignFirstResponder() -> Bool {
@@ -86,144 +87,49 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
         return super.performKeyEquivalent(theEvent)
     }
     
-    func pasteboard(pasteboard: NSPasteboard?, item: NSPasteboardItem, provideDataForType type: String) {
-        if type == NSPasteboardTypeRTFD {
-            if let pb = pasteboard, string = copiedString where string.length > 0 {
-                pb.setData(string.RTFDFromRange(NSMakeRange(0, string.length), documentAttributes: [NSDocumentTypeDocumentAttribute: NSRTFDTextDocumentType]), forType: NSPasteboardTypeRTFD)
-            }
-        } else if type == NSPasteboardTypeString {
-            if let pb = pasteboard, string = copiedString where string.length > 0 {
-                pb.setString(string.string, forType: NSPasteboardTypeString)
-            }
-        }
-    }
-    
-    override func replaceCharactersInRange(range: NSRange, withString aString: String) {
-        var changedRange = range
-        let oldString: NSAttributedString?
-        if NSMaxRange(range) > self.textStorage?.length {
-            oldString = NSAttributedString.init(string: aString)
-            changedRange = NSMakeRange(range.location, 0)
-        } else {
-            oldString = self.textStorage?.attributedSubstringFromRange(range)
-        }
-        
-        if let string = oldString {
-            undoManager?.registerUndoWithTarget(self, handler: { (RSTokenTextView) -> () in
-                self.replaceCharactersInRange(changedRange, withString: string.string)
-            })
-            undoManager?.setActionName(NSLocalizedString("actions.undo-replace", comment: "Undo Replace"))
-        }
-        
-        super.replaceCharactersInRange(changedRange, withString: aString)
-    }
-    
-    override func cut(sender: AnyObject?) {
-        super.cut(sender)
-        
-        let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-        let mutableAttrString = self.textStorage?.attributedSubstringFromRange(range)
-        
-        //Erase previously copied string, if any
-        copiedString = NSMutableAttributedString.init(string: "")
-        copiedString?.appendAttributedString(mutableAttrString!)
-        //Reset this flag to clear out the selection ranges
-        mouseWasDragged = false
-        
-        
-        
-        if let string = copiedString where string.length > 0 {
-            let pasteboardItem = RSTokenPasteboardItem.init(withAttributedString: string)
-            let pasteboard = NSPasteboard.generalPasteboard()
-            pasteboard.clearContents()
-            pasteboard.writeObjects([pasteboardItem])
-        }
-        if self.shouldChangeTextInRange(range, replacementString: "") {
-            self.replaceCharactersInRange(range, withString: "")
-        }
-        self.insertionPointColor = NSColor.blackColor()
-    }
-    
-    override func paste(sender: AnyObject?) {
-        super.paste(sender)
-        
-        let pasteboard = NSPasteboard.generalPasteboard()
-        let classArray = [RSTokenPasteboardItem.classForCoder(), NSString.classForCoder()]
-        let options = [String : AnyObject]()
-        
-        let ok = pasteboard.canReadObjectForClasses(classArray, options: options)
-        
-        if ok {
-            if mouseWasDragged {
-                //There is currently selected Text
-                let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-                self.replaceCharactersInRange(range, withString: "")
-            }
-            
-            if let objectsToPaste = pasteboard.readObjectsForClasses(classArray, options: options) {
-                if let item = objectsToPaste[0] as? RSTokenPasteboardItem {
-                    self.textStorage?.insertAttributedString(item.attributedString, atIndex: self.selectedRange().location)
-                } else if let item = objectsToPaste[0] as? String {
-                    self.textStorage?.insertAttributedString(NSAttributedString.init(string: item), atIndex: self.selectedRange().location)
-                }
-            }
-            
-            //Set everything unselected
-            self.setTokenStatus(false, startIndex: 0, endIndex: (self.textStorage?.length)!)
-            //Reset the selected token position
-            mouseWasDragged = false
-            //We should also update the token field data source when something is pasted to the textview
-            (self.delegate as! RSTokenField).textView(self, didChangeTokens: self.tokenArray())
-        }
-    }
-    
-    override func copy(sender: AnyObject?) {
-        super.copy(sender)
-        
-        let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-        
-        let mutableAttrString = self.textStorage?.attributedSubstringFromRange(range)
-        
-        //Erase previously copied string, if any
-        copiedString = NSMutableAttributedString.init(string: "")
-        copiedString?.appendAttributedString(mutableAttrString!)
-        
-        //Write Content to the pasteboard
-        if let string = copiedString where string.length > 0 {
-            let pasteboardItem = RSTokenPasteboardItem.init(withAttributedString: string)
-            let pasteboard = NSPasteboard.generalPasteboard()
-            pasteboard.clearContents()
-            pasteboard.writeObjects([pasteboardItem])
-        }
-        
-        self.insertionPointColor = NSColor.whiteColor()
-    }
-    
     //MARK: Text Insertion Methods
     func insertTokenForText(tokenText: String, replacementRange: NSRange) {
-        let insertionLocation = self.selectedRange().location
+        self.undoManager?.beginUndoGrouping()
+        
         let delegate = self.delegate as! RSTokenField
         if delegate.shouldAddToken(tokenText, atTokenIndex: self.countOfTokensInRange(NSMakeRange(0, replacementRange.location))) {
             // Used for replacing the token on double click
             self.lastEnteredStem = RSTokenCompletionWindowController.sharedInstance.rawStem
             let insertiontext = self.tokenForString(tokenText)
-            let delegate = self.delegate as! RSTokenField
             
+            let delegate = self.delegate as! RSTokenField
+            //Disabling undo registration because, super call will club this insertion with the regular text insertion
+            self.undoManager?.disableUndoRegistration()
             super.insertText(insertiontext, replacementRange: replacementRange)
+            self.undoManager?.enableUndoRegistration()
             delegate.textView(self, didChangeTokens: self.tokenArray())
             
-            self.setSelectedRange(NSMakeRange(insertionLocation + 2, 0))
+            self.undoManager?.registerUndoWithTarget(self, handler: {[range = replacementRange] (RSTokenTextView) -> () in
+                self.replaceCharactersInRange(range, withString: "")
+            })
+            self.undoManager?.setActionName("Undo-Tokenizer")
+            self.setSelectedRange(NSMakeRange(NSMaxRange(replacementRange), 0))
         }
         
+        self.undoManager?.endUndoGrouping()
+        self.dumpUndoStack()
+    }
+    
+    override func replaceCharactersInRange(range: NSRange, withString aString: String) {
+        if self.shouldChangeTextInRange(range, replacementString: aString) {
+            super.replaceCharactersInRange(range, withString: aString)
+        }
     }
     
     override func insertText(aString: AnyObject, replacementRange: NSRange) {
         guard let textStorage = self.textStorage else { return }
+        //self.undoManager?.beginUndoGrouping()
         // Erase all the selection and reset the attributes for textStorage and typing
         if self.mouseWasDragged {
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
             if NSMaxRange(deleteRange) <= self.textStorage?.length {
-                textStorage.replaceCharactersInRange(deleteRange, withString: "")
+                self.setSelectedRange(deleteRange)
+                self.delete(nil)
             }
             self.mouseWasDragged = false
         }
@@ -252,6 +158,7 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
                 completionController.insertText(startingStem)
             }
             
+            
             if insertionIndex <= textStorage.length {
                 let stemRange = self.completionRange()
                 
@@ -263,7 +170,9 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
         self.insertionPointColor = NSColor.blackColor()
         (self.delegate as! RSTokenField).setToken(typeOnly: false, selected: true, atIndex: selectedRange.location)
         self.setSelectedRange(NSMakeRange(insertionIndex, 0))
+        
         super.insertText(aString, replacementRange: replacementRange)
+        //self.undoManager?.endUndoGrouping()
     }
     
     override func doCommandBySelector(aSelector: Selector) {
@@ -283,7 +192,9 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
         } else if aSelector == "deleteBackward:" {
             if self.mouseWasDragged {
                 let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
-                textStorage.replaceCharactersInRange(deleteRange, withString: "")
+                //Delete
+                self.setSelectedRange(deleteRange)
+                self.delete(nil)
                 self.mouseWasDragged = false
             } else if self.selectedRange.location >= 0 {
                 
@@ -291,12 +202,14 @@ class RSTokenTextView: NSTextView, NSPasteboardItemDataProvider {
                 
                 if self.selectedRange().location < textStorage.length && textStorage.isTokenAtIndexSelected(self.selectedRange().location + 1) {
                     //The token is already selected and ready to be deleted at this point
-                    self.replaceCharactersInRange(NSMakeRange(self.selectedRange().location, 3), withString: "")
+                    self.setSelectedRange(NSMakeRange(self.selectedRange().location, 3))
+                    self.delete(nil)
                     self.insertionPointColor = NSColor.blackColor()
                 } else if tokenIndex > 0 && textStorage.tokenStringAtIndex(tokenIndex) != nil {
                     if textStorage.isTokenAtIndexSelected(tokenIndex) {
                         //The token is already selected and ready to be deleted at this point
-                        self.replaceCharactersInRange(NSMakeRange(tokenIndex - 1, 3), withString: "")
+                        self.setSelectedRange(NSMakeRange(tokenIndex - 1, 3))
+                        self.delete(nil)
                         self.insertionPointColor = NSColor.blackColor()
                     } else {
                         //This is a token, highlight this but do not delete it
@@ -454,13 +367,19 @@ extension RSTokenTextView {
             }
         }
         
+        let appendedAttributeString = NSMutableAttributedString()
         let attachment = RSTextAttachment.init(withTokenView: view)
+        let whiteSpace = NSMutableAttributedString(string: " ")
         
         let attributeString = NSMutableAttributedString.init(attributedString: NSAttributedString.init(attachment: attachment))
         attributeString.addAttribute(NSAttachmentAttributeName, value: attachment, range: NSMakeRange(0, attributeString.length))
         attributeString.addAttribute(NSBaselineOffsetAttributeName, value:0, range: NSMakeRange(0, attributeString.length))
         
-        return attributeString
+        appendedAttributeString.appendAttributedString(whiteSpace)
+        appendedAttributeString.appendAttributedString(attributeString)
+        appendedAttributeString.appendAttributedString(whiteSpace)
+        
+        return appendedAttributeString
     }
     
     // Used to delete Tokens
@@ -481,16 +400,7 @@ extension RSTokenTextView {
                 if let attribute = textStorage.attribute(NSAttachmentAttributeName, atIndex: curRange.location, effectiveRange: &curRange) where attribute is RSTextAttachment {
                     tokenArray.append((attribute as! RSTextAttachment).tokenView.tokenItem)
                 } else if let string: NSAttributedString = textStorage.attributedSubstringFromRange(curRange) {
-                    if (string.string == " " || string.string == "  ") && ((curRange.location > 0 && textStorage.tokenStringAtIndex(curRange.location - 1) != nil) || (curRange.location < textStorage.length &&
-                        textStorage.tokenStringAtIndex(curRange.location + 1) != nil)) {
-                            
-                    } else {
-                        //TODO: Trimming may not be required, look in to this later
-                        /*let trimmedString = string.string.stringByTrimmingCharactersInSet(
-                            NSCharacterSet.whitespaceAndNewlineCharacterSet()
-                        )*/
-                        tokenArray.append(RSTokenItemSection.init(name: string.string))
-                    }
+                    tokenArray.append(RSTokenItemSection.init(name: string.string))
                 }
                 
                 curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
@@ -510,14 +420,22 @@ extension RSTokenTextView {
         let effectiveRange = self.selectedRange()
         var startLocation = self.selectedRange().location
         var endLocation = effectiveRange.location
-        let curString = self.textStorage
+        guard let curString = self.textStorage else { return NSRange(location: 0, length: 0) }
         
-        while Bool(startLocation) && ((curString?.attribute(NSAttachmentAttributeName, atIndex: startLocation - 1, effectiveRange: nil)) == nil) {
-            startLocation--
+        while startLocation > 2 {
+            if curString.isWhiteSpace(startLocation - 1) && curString.tokenStringAtIndex(startLocation - 2) != nil {
+                break
+            } else {
+                startLocation--
+            }
         }
         
-        while endLocation < (curString?.length) && ((curString?.attribute(NSAttachmentAttributeName, atIndex: endLocation, effectiveRange: nil)) == nil) {
-            endLocation++
+        while endLocation < (curString.length) - 1 {
+            if curString.isWhiteSpace(endLocation) && curString.tokenStringAtIndex(endLocation + 1) != nil {
+                break
+            } else {
+                endLocation++
+            }
         }
 
         return NSMakeRange(startLocation,endLocation-startLocation)
@@ -1182,8 +1100,10 @@ extension RSTokenTextView {
             curRange = NSMakeRange(curRange.location > 0 ? curRange.location - 1 : NSNotFound, 0)
         }
         
-        
-        textStorage.replaceCharactersInRange(NSMakeRange(charIndex - 1, 3), withString: stem)
+        self.mouseWasDragged = true
+        self.setSelectedRange(NSMakeRange(charIndex - 1, 3))
+        self.delete(nil)
+        self.insertText(stem, replacementRange: self.selectedRange())
         self.insertionPointColor = NSColor.blackColor()
     }
     
@@ -1265,5 +1185,153 @@ extension RSTokenTextView {
         } else {
             return newRange
         }
+    }
+}
+
+//MARK: DELETE, CUT, COPY, PASTE Operations
+extension RSTokenTextView {
+    override func delete(sender: AnyObject?) {
+        self.undoManager?.registerUndoWithTarget(self, handler: {[rangeToDelete = self.selectedRange(), selected = self.mouseWasDragged,
+            lastSelectedTokenPosition = self.lastSelectedTokenPosition] (RSTokenTextView) -> () in
+            self.setTokenStatus(selected, startIndex: rangeToDelete.location, endIndex: NSMaxRange(rangeToDelete))
+            
+            self.lastSelectedTokenPosition = lastSelectedTokenPosition
+            self.mouseWasDragged = selected
+            
+            self.setSelectedRange(NSMakeRange(NSMaxRange(lastSelectedTokenPosition.newRange), 0))
+            self.insertionPointColor = selected ? NSColor.whiteColor() : NSColor.blackColor()
+            })
+        self.undoManager?.setActionName(NSLocalizedString("Undo - Delete", comment:"Revert Delete"))
+        
+        super.delete(sender)
+    }
+    
+    override func cut(sender: AnyObject?) {
+        super.cut(sender)
+        
+        let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+        let mutableAttrString = self.textStorage?.attributedSubstringFromRange(range)
+        
+        //Erase previously copied string, if any
+        copiedString = NSMutableAttributedString.init(string: "")
+        copiedString?.appendAttributedString(mutableAttrString!)
+        
+        if let string = copiedString where string.length > 0 {
+            let pasteboardItem = RSTokenPasteboardItem.init(withAttributedString: string)
+            let pasteboard = NSPasteboard.generalPasteboard()
+            pasteboard.clearContents()
+            pasteboard.writeObjects([pasteboardItem])
+        }
+        
+        self.setSelectedRange(range)
+        self.delete(nil)
+        //Reset this flag to clear out the selection ranges
+        mouseWasDragged = false
+        self.insertionPointColor = NSColor.blackColor()
+    }
+    
+    override func paste(sender: AnyObject?) {
+        super.paste(sender)
+        
+        let pasteboard = NSPasteboard.generalPasteboard()
+        let classArray = [RSTokenPasteboardItem.classForCoder(), NSString.classForCoder()]
+        let options = [String : AnyObject]()
+        
+        let ok = pasteboard.canReadObjectForClasses(classArray, options: options)
+        
+        if ok {
+            self.undoManager?.beginUndoGrouping()
+            if mouseWasDragged {
+                //There is currently selected Text
+                let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+                self.replaceCharactersInRange(range, withString: "")
+            }
+
+            if let objectsToPaste = pasteboard.readObjectsForClasses(classArray, options: options) {
+                if let item = objectsToPaste[0] as? RSTokenPasteboardItem {
+                    super.insertText(item.attributedString, replacementRange: self.selectedRange())
+                } else if let item = objectsToPaste[0] as? String {
+                    super.insertText(NSAttributedString.init(string: item), replacementRange: self.selectedRange())
+                }
+            }
+            self.undoManager?.setActionName("Undo - Paste")
+            //Set everything unselected
+            self.setTokenStatus(false, startIndex: 0, endIndex: (self.textStorage?.length)!)
+            //Reset the selected token position
+            mouseWasDragged = false
+            //We should also update the token field data source when something is pasted to the textview
+            (self.delegate as! RSTokenField).textView(self, didChangeTokens: self.tokenArray())
+            
+            self.undoManager?.endUndoGrouping()
+        }
+    }
+    
+    override func copy(sender: AnyObject?) {
+        super.copy(sender)
+        
+        let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
+        
+        let mutableAttrString = self.textStorage?.attributedSubstringFromRange(range)
+        
+        //Erase previously copied string, if any
+        copiedString = NSMutableAttributedString.init(string: "")
+        copiedString?.appendAttributedString(mutableAttrString!)
+        
+        //Write Content to the pasteboard
+        if let string = copiedString where string.length > 0 {
+            let pasteboardItem = RSTokenPasteboardItem.init(withAttributedString: string)
+            let pasteboard = NSPasteboard.generalPasteboard()
+            pasteboard.clearContents()
+            pasteboard.writeObjects([pasteboardItem])
+        }
+        
+        self.insertionPointColor = NSColor.whiteColor()
+    }
+}
+
+//MARK : UNDO Manager
+extension RSTokenTextView {
+    func undo(sender: AnyObject?) {
+        //This is needed when there is no "Edit" Menu
+        self.undoManager?.undo()
+    }
+    
+    func redo(sender: AnyObject?) {
+        self.undoManager?.redo()
+    }
+    
+    private func dumpUndoStack() {
+        let aClass : NSUndoManager.Type = (self.undoManager?.dynamicType)!
+        var propertiesCount : CUnsignedInt = 0
+        let propertiesInAClass : UnsafeMutablePointer<Ivar> = class_copyIvarList(aClass, &propertiesCount)
+        var propValue : AnyObject? = nil
+        
+        var redoStack : AnyObject? = nil
+        
+        for var i = 0; i < Int(propertiesCount); i++ {
+            let propName:NSString = NSString(CString: ivar_getName(propertiesInAClass[Int(i)]), encoding: NSUTF8StringEncoding)!
+            
+            if propName == "_undoStack" {
+                propValue = self.undoManager!.valueForKey("_undoStack")!
+            }
+            
+            if propName == "_redoStack" {
+                redoStack = self.undoManager!.valueForKey("_redoStack")!
+            }
+            Swift.print(propName)
+        }
+        
+        NSLog("(%d entries) %@", propValue!.count, propValue!.description)
+        NSLog("(%d entries) %@", redoStack!.count, redoStack!.description)
+    }
+    
+    func didRedo(notification: NSNotification) {
+        self.setTokenStatus(self.mouseWasDragged, startIndex: self.lastSelectedTokenPosition.oldRange.location, endIndex:self.lastSelectedTokenPosition.newRange.location)
+        self.didRedoDelete = true
+    }
+    
+    func didUndo(notification: NSNotification) {
+        self.setSelectedRange(NSMakeRange(NSMaxRange(self.selectedRange()), 0))
+        self.didRedoDelete = false
     }
 }
