@@ -1237,7 +1237,6 @@ extension RSTokenTextView {
         let ok = pasteboard.canReadObjectForClasses(classArray, options: options)
         
         if ok {
-            self.undoManager?.beginUndoGrouping()
             if mouseWasDragged {
                 //There is currently selected Text
                 let range = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
@@ -1258,8 +1257,6 @@ extension RSTokenTextView {
             mouseWasDragged = false
             //We should also update the token field data source when something is pasted to the textview
             (self.delegate as! RSTokenField).textView(self, didChangeTokens: self.tokenArray())
-            
-            self.undoManager?.endUndoGrouping()
         }
     }
     
