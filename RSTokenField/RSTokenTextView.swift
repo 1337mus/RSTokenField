@@ -90,7 +90,6 @@ class RSTokenTextView: NSTextView {
     //MARK: Text Insertion Methods
     func insertTokenForText(tokenText: String, replacementRange: NSRange) {
         self.undoManager?.beginUndoGrouping()
-        
         let delegate = self.delegate as! RSTokenField
         if delegate.shouldAddToken(tokenText, atTokenIndex: self.countOfTokensInRange(NSMakeRange(0, replacementRange.location))) {
             // Used for replacing the token on double click
@@ -99,18 +98,15 @@ class RSTokenTextView: NSTextView {
             
             let delegate = self.delegate as! RSTokenField
             //Disabling undo registration because, super call will club this insertion with the regular text insertion
-            self.undoManager?.disableUndoRegistration()
             super.insertText(insertiontext, replacementRange: replacementRange)
-            self.undoManager?.enableUndoRegistration()
             delegate.textView(self, didChangeTokens: self.tokenArray())
-            
-            self.undoManager?.registerUndoWithTarget(self, handler: {[range = replacementRange] (RSTokenTextView) -> () in
-                self.replaceCharactersInRange(range, withString: "")
+            //This empty block serves to break the undo grouping between tokens and characters entered
+            self.undoManager?.registerUndoWithTarget(self, handler: {(RSTokenTextView) -> () in
+                //self.replaceCharactersInRange(range, withString: "")
             })
             self.undoManager?.setActionName("Undo-Tokenizer")
             self.setSelectedRange(NSMakeRange(NSMaxRange(replacementRange), 0))
         }
-        
         self.undoManager?.endUndoGrouping()
         self.dumpUndoStack()
     }
@@ -123,7 +119,6 @@ class RSTokenTextView: NSTextView {
     
     override func insertText(aString: AnyObject, replacementRange: NSRange) {
         guard let textStorage = self.textStorage else { return }
-        self.undoManager?.beginUndoGrouping()
         // Erase all the selection and reset the attributes for textStorage and typing
         if self.mouseWasDragged {
             let deleteRange = NSUnionRange(self.lastSelectedTokenPosition.oldRange, self.lastSelectedTokenPosition.newRange)
@@ -172,7 +167,6 @@ class RSTokenTextView: NSTextView {
         self.setSelectedRange(NSMakeRange(insertionIndex, 0))
         
         super.insertText(aString, replacementRange: replacementRange)
-        self.undoManager?.endUndoGrouping()
     }
     
     override func doCommandBySelector(aSelector: Selector) {
