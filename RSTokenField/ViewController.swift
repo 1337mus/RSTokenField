@@ -42,7 +42,7 @@ class ViewController: NSViewController {
         }
     }
 
-    func action(sender: NSMenuItem) {
+    func leftClickMenu(sender: NSMenuItem) {
         if let menuItem = sender.representedObject, let item = menuItem as? RSMenuItemObject {
             self.tokenField.replaceToken(withType: item.tokenType, tokenTitle: item.tokenTitle, atIndex: item.tokenIndex)
             self.tokenField.setToken(typeOnly: true, selected: false, atIndex: item.tokenIndex)
@@ -155,7 +155,7 @@ extension ViewController: RSTokenFieldDelegate {
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "menuDismissed:", name: NSMenuDidEndTrackingNotification, object: test)
         let itemNames = ["A", "B", "Entire Message"]
         for name in itemNames {
-            let item = NSMenuItem.init(title: name, action: "action:", keyEquivalent: "")
+            let item = NSMenuItem.init(title: name, action: "leftClickMenu:", keyEquivalent: "")
             item.target = self
             item.representedObject = RSMenuItemObject(type: name, title: string, index: index)
             test.addItem(item)

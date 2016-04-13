@@ -36,6 +36,30 @@ class RSTokenTextView: NSTextView {
         }
     }
     
+    private var _rightClickMenu: NSMenu? = nil
+    
+    private var rightClickMenu: NSMenu {
+        get {
+            if self._rightClickMenu == nil {
+                self._rightClickMenu = NSMenu()
+                
+                var item = NSMenuItem.init(title: "Cut", action: "cut:", keyEquivalent: "")
+                item.target = self
+                self._rightClickMenu!.addItem(item)
+                
+                item = NSMenuItem.init(title: "Copy", action: "copy:", keyEquivalent: "")
+                item.target = self
+                self._rightClickMenu!.addItem(item)
+                
+                item = NSMenuItem.init(title: "Paste", action: "paste:", keyEquivalent: "")
+                item.target = self
+                self._rightClickMenu!.addItem(item)
+            }
+            
+            return self._rightClickMenu!
+        }
+    }
+    
     private var lastEnteredStem: String = ""
     private var copiedString: NSMutableAttributedString? = nil
     private var didRedoDelete: Bool = false
@@ -102,7 +126,6 @@ class RSTokenTextView: NSTextView {
             delegate.textView(self, didChangeTokens: self.tokenArray())
             //This empty block serves to break the undo grouping between tokens and characters entered
             self.undoManager?.registerUndoWithTarget(self, handler: {(RSTokenTextView) -> () in
-                //self.replaceCharactersInRange(range, withString: "")
             })
             self.undoManager?.setActionName("Undo-Tokenizer")
             self.setSelectedRange(NSMakeRange(NSMaxRange(replacementRange), 0))
@@ -796,6 +819,42 @@ extension RSTokenTextView {
 
 //MARK: MOUSE EVENTS
 extension RSTokenTextView {
+    // Right Click Mouse Event
+    override func rightMouseDown(theEvent: NSEvent) {
+        guard let eventMetaData = self.getMetaDataForMouseEvent(theEvent) else { return }
+        
+        let pos = (eventMetaData["position"] as! NSValue).pointValue
+        let bounds = (eventMetaData["bounds"] as! NSValue).rectValue
+        
+        if pos.x >= self.bounds.origin.x && pos.x <= self.bounds.origin.x + self.bounds.size.width {
+            let point = CGPointMake(pos.x, bounds.origin.y + 10)
+            self.rightClickMenu.popUpMenuPositioningItem(self.rightClickMenu.itemAtIndex(0), atLocation: point, inView: self)
+        }
+    }
+    
+    
+    override func validateUserInterfaceItem(anItem: NSValidatedUserInterfaceItem) -> Bool {
+        let selector = anItem.action()
+        
+        if selector == "cut:" {
+            if self.mouseWasDragged && self.lastSelectedTokenPosition.oldRange.location != NSNotFound && self.lastSelectedTokenPosition.newRange.location != NSNotFound {
+                return true
+            }
+        } else if selector == "copy:" {
+            if self.mouseWasDragged && self.lastSelectedTokenPosition.oldRange.location != NSNotFound && self.lastSelectedTokenPosition.newRange.location != NSNotFound {
+                return true
+            }
+        } else if selector == "paste:" {
+            let pasteboard = NSPasteboard.generalPasteboard()
+            let classArray = [RSTokenPasteboardItem.classForCoder(), NSString.classForCoder()]
+            let options = [String : AnyObject]()
+            
+            return pasteboard.canReadObjectForClasses(classArray, options: options)
+        }
+        
+        return false
+    }
+    
     // Use Mouse Loop Tracking Approach
     override func mouseDown(theEvent: NSEvent) {
         guard let window = self.window else { return }
