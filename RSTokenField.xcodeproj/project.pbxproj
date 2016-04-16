@@ -29,6 +29,7 @@
 		DB54D54B1C85675D009DADBF /* RSTokenCompletionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D54A1C85675D009DADBF /* RSTokenCompletionWindowController.swift */; };
 		DB54D54D1C856DB7009DADBF /* RSTokenCompletionTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54D54C1C856DB7009DADBF /* RSTokenCompletionTableView.swift */; };
 		DB73A3E61CB0C2A300C0D6BD /* RSTokenPasteboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB73A3E51CB0C2A300C0D6BD /* RSTokenPasteboardItem.swift */; };
+		DBF008741CC2D0E90002474F /* RSTokenField.png in Resources */ = {isa = PBXBuildFile; fileRef = DBF008731CC2D0E90002474F /* RSTokenField.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +79,7 @@
 		DB54D54A1C85675D009DADBF /* RSTokenCompletionWindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenCompletionWindowController.swift; sourceTree = "<group>"; };
 		DB54D54C1C856DB7009DADBF /* RSTokenCompletionTableView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenCompletionTableView.swift; sourceTree = "<group>"; };
 		DB73A3E51CB0C2A300C0D6BD /* RSTokenPasteboardItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RSTokenPasteboardItem.swift; sourceTree = "<group>"; };
+		DBF008731CC2D0E90002474F /* RSTokenField.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = RSTokenField.png; path = docs/RSTokenField.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 				DB54D50F1C839AF5009DADBF /* RSTokenFieldTests */,
 				DB54D51A1C839AF5009DADBF /* RSTokenFieldUITests */,
 				DB54D4FC1C839AF5009DADBF /* Products */,
+				DBF008701CC2CF980002474F /* Docs */,
 			);
 			sourceTree = "<group>";
 		};
@@ -178,6 +181,14 @@
 				DB05DD2B1C8E5AC40078466F /* NSImage+RSTokenField.swift */,
 			);
 			name = RSTokenField;
+			sourceTree = "<group>";
+		};
+		DBF008701CC2CF980002474F /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				DBF008731CC2D0E90002474F /* RSTokenField.png */,
+			);
+			name = Docs;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -284,6 +295,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DBF008741CC2D0E90002474F /* RSTokenField.png in Resources */,
 				DB05DD2A1C8E4BAC0078466F /* RSTableCellView.xib in Resources */,
 				DB54D5031C839AF5009DADBF /* Assets.xcassets in Resources */,
 				DB54D5381C83E709009DADBF /* RSTokenView.xib in Resources */,
