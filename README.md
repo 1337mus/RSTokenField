@@ -11,7 +11,7 @@ new range and old range information to perform any manipulation to the text ente
 - **RSTokeView** (Subclass of plain old NSView)- This is the token representation view which has a similar look and feel as the Mail app search tokens. If you need custom look you will 
 have to override/replace this class with your own representation. (Through a xib file)
 
-
+![RSTokenField](https://raw.githubusercontent.com/1337mus/RSTokenField/master/docs/RSTokenField.png)
 
 
 
