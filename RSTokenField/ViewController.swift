@@ -25,13 +25,13 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let divisor: Int = tokenCompletionArray.count / tokenCompletionSections.count
+        let divisor: Int = self.tokenCompletionArray.count / self.tokenCompletionSections.count
         for var i = 0; i < tokenCompletionSections.count; i++ {
             for var j = divisor * i; j < divisor * (i + 1) ; j++ {
                 if j % divisor == 0 {
-                    dataSource.append(RSTokenItemSection.init(name: tokenCompletionSections[i]))
+                    self.dataSource.append(RSTokenItemSection.init(name: tokenCompletionSections[i]))
                 }
-                dataSource.append(RSTokenItem.init(type: tokenCompletionSections[i], title: tokenCompletionArray[j]))
+                self.dataSource.append(RSTokenItem.init(type: tokenCompletionSections[i], title: tokenCompletionArray[j]))
             }
         }
     }
@@ -42,9 +42,20 @@ class ViewController: NSViewController {
         }
     }
 
-    func action(sender: NSMenuItem) {
+    func leftClickMenu(sender: NSMenuItem) {
         if let menuItem = sender.representedObject, let item = menuItem as? RSMenuItemObject {
             self.tokenField.replaceToken(withType: item.tokenType, tokenTitle: item.tokenTitle, atIndex: item.tokenIndex)
+            self.tokenField.setToken(typeOnly: true, selected: false, atIndex: item.tokenIndex)
+        }
+    }
+    
+    func menuDismissed(notification: NSNotification) {
+        if let menu: NSMenu = notification.object as? NSMenu {
+            menu.itemArray.forEach({ (item) -> () in
+                if let menuItem = item.representedObject, let obj = menuItem as? RSMenuItemObject {
+                    self.tokenField.setToken(typeOnly: true, selected: false, atIndex: obj.tokenIndex)
+                }
+            })
         }
     }
 
@@ -72,14 +83,17 @@ extension ViewController: RSTokenFieldDelegate {
         var matches = [String]()
         var matchesDictionary = [RSTokenItemSection : [RSTokenItem]]()
         
-        for data in dataSource {
+        for data in self.dataSource {
             if data is RSTokenItemSection { continue }
             
             let candidate = (data as! RSTokenItem).tokenTitle
             var found = false
             for tokenItem in tokenField.tokenArray {
-                if tokenItem.tokenTitle == candidate {
-                    found = true
+                if let t = tokenItem as? RSTokenItem {
+                    if t.tokenTitle == candidate {
+                        found = true
+                        break
+                    }
                 }
             }
             if found { continue }
@@ -89,8 +103,21 @@ extension ViewController: RSTokenFieldDelegate {
                 let alphaKeyword = searchFullString ? candidate : candidate.substringFromIndex(alphaNumericRange!.startIndex)
                 let subStringRange = alphaKeyword.rangeOfString(alphaSubstring, options: [NSStringCompareOptions.CaseInsensitiveSearch, NSStringCompareOptions.DiacriticInsensitiveSearch], range: nil, locale: nil)
                 if let _ = subStringRange {
-                    if let _ = matchesDictionary[RSTokenItemSection.init(name: data.tokenType)] {
-                        matchesDictionary[RSTokenItemSection.init(name: data.tokenType)]?.append(data as! RSTokenItem)
+                    var found = false
+                    var array = [RSTokenItem]()
+                    var k = RSTokenItemSection(name: "")
+                    
+                    for (key,value) in matchesDictionary {
+                        if key.sectionName == data.tokenType {
+                            found = true
+                            array = value
+                            k = key
+                        }
+                    }
+                    
+                    if found {
+                        array.append(data as! RSTokenItem)
+                        matchesDictionary[k] = array
                     } else {
                         matchesDictionary[RSTokenItemSection.init(name: data.tokenType)] = [data as! RSTokenItem]
                     }
@@ -125,9 +152,10 @@ extension ViewController: RSTokenFieldDelegate {
     
     func tokenField(tokenField: RSTokenField, menuForToken string: String, atIndex index: Int) -> NSMenu {
         let test = NSMenu()
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "menuDismissed:", name: NSMenuDidEndTrackingNotification, object: test)
         let itemNames = ["A", "B", "Entire Message"]
         for name in itemNames {
-            let item = NSMenuItem.init(title: name, action: "action:", keyEquivalent: "")
+            let item = NSMenuItem.init(title: name, action: "leftClickMenu:", keyEquivalent: "")
             item.target = self
             item.representedObject = RSMenuItemObject(type: name, title: string, index: index)
             test.addItem(item)
@@ -148,3 +176,4 @@ class RSMenuItemObject: NSObject {
         self.tokenIndex = index
     }
 }
+

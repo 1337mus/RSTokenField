@@ -10,19 +10,19 @@ import Cocoa
 
 class RSTextAttachmentCell: NSTextAttachmentCell {
 
-    override func cellFrameForTextContainer(textContainer: NSTextContainer, proposedLineFragment lineFrag: NSRect, glyphPosition position: NSPoint, characterIndex charIndex: Int) -> NSRect {
+    /*override func cellFrameForTextContainer(textContainer: NSTextContainer, proposedLineFragment lineFrag: NSRect, glyphPosition position: NSPoint, characterIndex charIndex: Int) -> NSRect {
         return self.scaleImageSize(toHeight: lineFrag.height)
-    }
-    
-    override func drawWithFrame(cellFrame: NSRect, inView controlView: NSView?) {
+    }*/
+
+    /*override func drawWithFrame(cellFrame: NSRect, inView controlView: NSView?) {
         if let img = self.image {
-            let rect = NSMakeRect(cellFrame.origin.x , cellFrame.origin.y + 3, cellFrame.size.width, cellFrame.size.height)
+            let rect = NSMakeRect(cellFrame.origin.x , cellFrame.origin.y + 1, cellFrame.size.width, cellFrame.size.height)
             img .drawInRect(rect, fromRect: NSZeroRect, operation: .CompositeSourceOver, fraction: 1.0, respectFlipped: true, hints: nil)
         }
-    }
+    }*/
     
     func scaleImageSize(toHeight height: CGFloat) -> NSRect {
-        var scalingFactor: CGFloat = 0.9
+        var scalingFactor: CGFloat = 1
         let imageSize = self.image?.size
         
         if height < imageSize?.height {
@@ -37,5 +37,11 @@ class RSTextAttachmentCell: NSTextAttachmentCell {
     }
     override func trackMouse(theEvent: NSEvent, inRect cellFrame: NSRect, ofView controlView: NSView?, untilMouseUp flag: Bool) -> Bool {
         return true
+    }
+    
+    override func cellBaselineOffset() -> NSPoint {
+        var baseline = super.cellBaselineOffset()
+        baseline.y = baseline.y - 4.0
+        return baseline
     }
 }

@@ -18,6 +18,8 @@ class RSTokenFieldCell: NSTextFieldCell, NSTextViewDelegate {
         dispatch_once(&Static.onceToken) {
             Static.tokenTextView = RSTokenTextView()
             Static.tokenTextView?.fieldEditor = true
+            NSNotificationCenter.defaultCenter().addObserver(Static.tokenTextView!, selector: "didRedo:", name: NSUndoManagerDidRedoChangeNotification, object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(Static.tokenTextView!, selector: "didUndo:", name: NSUndoManagerDidUndoChangeNotification, object: nil)
         }
         
         return Static.tokenTextView
@@ -26,10 +28,6 @@ class RSTokenFieldCell: NSTextFieldCell, NSTextViewDelegate {
     override func selectWithFrame(aRect: NSRect, inView controlView: NSView, editor textObj: NSText, delegate anObject: AnyObject?, start selStart: Int, length selLength: Int) {
         super.selectWithFrame(aRect, inView: controlView, editor: textObj, delegate: anObject, start: selStart, length: selLength)
         let textView = textObj as! RSTokenTextView
-        let controlView = controlView as! RSTokenField
-        if let _ = controlView.tokenArray {
-            textView.setTokenArray(controlView.tokenArray)
-        }
         textObj.selectedRange = NSMakeRange(textView.textStorage!.length, 0)
     }
     

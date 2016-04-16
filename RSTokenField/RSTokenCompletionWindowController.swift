@@ -235,7 +235,11 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
     }
     
     func chooseCompletion(completion: String, forTextView aTextView: RSTokenTextView) {
-        aTextView.insertTokenForText(completion, replacementRange: aTextView.rangeForCompletion())
+        //Replace the stem with the token
+        let selectedRange = aTextView.selectedRange()
+        aTextView.setSelectedRange(NSMakeRange(selectedRange.location - self.rawStem.characters.count, self.rawStem.characters.count))
+        aTextView.delete(nil)
+        aTextView.insertTokenForText(completion, replacementRange: NSMakeRange(selectedRange.location - self.rawStem.characters.count , 3))
     }
     
     // MARK: TableView Delegate Methods
@@ -263,12 +267,12 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
                     }
                 }
                 
-                sectionHeader?.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
+                sectionHeader!.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
                 sectionHeader!.identifier = "RSTokenItemSection"
             }
             
-            sectionHeader?.textField!.bezeled = false
-            sectionHeader?.textField!.stringValue = (tokenItemType as! RSTokenItemSection).sectionName
+            sectionHeader!.textField!.bezeled = false
+            sectionHeader!.textField!.stringValue = (tokenItemType as! RSTokenItemSection).sectionName
             
             return sectionHeader
         } else if tokenItemType is RSTokenItem {
@@ -284,13 +288,13 @@ class RSTokenCompletionWindowController: NSWindowController, NSWindowDelegate, N
                     }
                 }
                 
-                tokenItem?.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
+                tokenItem!.frame = NSMakeRect(0, 0, tableView.frame.size.width, tableView.frame.size.height)
                 tokenItem!.identifier = "RSTokenItem"
             }
             
-            tokenItem?.textField!.bezeled = false
-            tokenItem?.textField!.drawsBackground = false
-            tokenItem?.textField!.stringValue = (tokenItemType as! RSTokenItem).tokenTitle
+            tokenItem!.textField!.bezeled = false
+            tokenItem!.textField!.drawsBackground = false
+            tokenItem!.textField!.stringValue = (tokenItemType as! RSTokenItem).tokenTitle
             
             return tokenItem
         }
